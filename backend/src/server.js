@@ -1,16 +1,28 @@
-import express from 'express';
-// import dotenv from 'dotenv';
-// dotenv.config();
-import { ENV } from './lib/env.js';
+import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
+import { ENV } from "./lib/env.js";
 
 const app = express();
-console.log('Iside .env PORT =', ENV.PORT);
-const PORT = ENV.PORT;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const NODE_ENV = ENV.NODE_ENV || process.env.NODE_ENV || "production";
+const PORT = ENV.PORT || 5000;
 
-app.get('/', (req, res) => {
-  res.send('Server is running');
+// API test
+app.get("/api/test", (req, res) => {
+  res.json({ message: "API is working" });
+});
+
+// Serve frontend build (default to production behaviour)
+const frontendPath = path.resolve(__dirname, "../../frontend/app/dist");
+app.use(express.static(frontendPath));
+
+// SPA fallback
+app.use((req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server running on port ${PORT} (NODE_ENV=${NODE_ENV})`);
 });
