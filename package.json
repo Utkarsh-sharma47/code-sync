@@ -1,0 +1,25 @@
+{
+  "name": "code-sync",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "install:backend": "npm install --prefix backend",
+    "install:frontend": "npm install --prefix frontend/app",
+    "build:frontend": "npm run build --prefix frontend/app",
+    "build": "npm run install:backend && npm run install:frontend && npm run build:frontend",
+    "start:server": "npm run start --prefix backend",
+    "start": "npm run build && npm run start:server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Utkarsh-sharma47/code-sync.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Utkarsh-sharma47/code-sync/issues"
+  },
+  "homepage": "https://github.com/Utkarsh-sharma47/code-sync#readme"
+}
