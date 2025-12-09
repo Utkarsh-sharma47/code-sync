@@ -7,7 +7,7 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const NODE_ENV = ENV.NODE_ENV || process.env.NODE_ENV || "production";
-const PORT = ENV.PORT || 3000;
+const PORT = ENV.PORT || 5000;
 
 // API test
 app.get("/api/test", (req, res) => {
