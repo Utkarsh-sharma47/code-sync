@@ -1,0 +1,18 @@
+in FRONTEND folder
+1. Open a terminal and navigate to the FRONTEND folder.
+2. Run the command: npm create vite@latest
+
+
+in BACKEND folder
+1. Open a terminal and navigate to the BACKEND folder.
+2. Initialize a new Node.js project by running: npm init -y
+3. Run the command: npm install nodemon --save-dev
+4. Install necessary dependencies by running: npm install express mongoose dotenv
+5. Make a src foldr and and make a server.js file inside it.
+6. Create a .env file in the BACKEND folder to store environment variables.
+    For now just add PORT=3000 to it.
+7. Update the package.json file to include a dev script for nodemon:
+    "scripts": {
+      "dev": "nodemon -r dotenv/config src/server.js"
+    },
+8. in backend>src>lib> make a global env.js file to load and export env variables.        
