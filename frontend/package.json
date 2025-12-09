@@ -1,5 +1,8 @@
 {
   "dependencies": {
     "code-sync": "file:.."
+  },
+  "devDependencies": {
+    "vite": "^7.2.7"
   }
 }
