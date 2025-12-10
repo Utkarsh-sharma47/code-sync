@@ -3,7 +3,10 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { ENV } from "./lib/env.js";
 import { connectDB } from "./lib/db.js";
-import {serve} from "inngest/express"
+import { serve } from "inngest/express";
+import { inngest, functions } from "./lib/inngest.js";
+import cors from "cors";
+
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
