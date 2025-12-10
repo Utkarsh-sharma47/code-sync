@@ -3,6 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { ENV } from "./lib/env.js";
 import { connectDB } from "./lib/db.js";
+import {serve} from "inngest/express"
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -14,6 +15,12 @@ const PORT = process.env.PORT || ENV.PORT || 5000;
 app.get("/api/test", (req, res) => {
   res.json({ message: "API is working" });
 });
+
+//middleware
+app.use(express.json());
+app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }));
+
+app.use("/api/inngest", serve({ client: inngest, functions }));
 
 // Serve frontend build (default to production behaviour)
 const frontendPath = path.resolve(__dirname, "../../frontend/app/dist");
