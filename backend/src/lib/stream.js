@@ -30,3 +30,11 @@ export const deleteStreamUser = async(userId)=>{
 }
 
 // TODO : generate another method - generate Token 
+export const generateStreamToken = (userId)=>{
+    try {
+        const token = chatClient.createToken(userId);
+        return token;
+    } catch (error) {
+        console.error("Error generating stream token:", error);
+    }   
+}
