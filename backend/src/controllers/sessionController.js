@@ -99,6 +99,12 @@ export async function joinSession(req, res) {
         if(session.status !== 'pending') {
             return res.status(400).json({message: "Session is not available to join"});
         }
+        if(session.host.toString() === userId.toString()) {
+            return res.status(400).json({message: "Host cannot join their own session"});
+        }
+        if(session.participant && session.participant.toString() === userId.toString()) {
+            return res.status(400).json({message: "You have already joined this session"});
+        }
         if(session.participant) {
             return res.status(400).json({message: "Session already has a participant"});
         }
