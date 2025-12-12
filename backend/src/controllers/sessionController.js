@@ -138,8 +138,7 @@ export async function endSession(req, res) {
         if(session.status === 'completed') {
             return res.status(400).json({message: "Session is already completed"});
         }
-        session.status = 'completed';
-        await session.save();
+        
         
         // delete video call
         const call = streamClient.video.call("default", session.callId);
@@ -148,6 +147,9 @@ export async function endSession(req, res) {
         //delete chat channel
         const channel = chatClient.channel("messaging", session.callId);
         await channel.delete();
+
+        session.status = 'completed';
+        await session.save();
 
         return res.status(200).json({message: "Session ended", session});
 
