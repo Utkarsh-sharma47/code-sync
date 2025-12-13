@@ -1,6 +1,7 @@
 import { Navigate, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import ProblemPage from "./pages/ProblemPage";
+import DashboardPage from "./pages/DashboardPage";
 import { useUser } from "@clerk/clerk-react";
 import AboutPage from "./pages/AboutPage";
 import Toast, { Toaster } from "react-hot-toast";
@@ -28,14 +29,16 @@ function App() {
           },
         }}
       />
+      {/* //* test toaster with click on button */}
+      {/* <button onClick={()=> Toast.success("heelo")}>
+        Click
+      </button> */}
 
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={!isSignedIn?<HomePage />:<Navigate to={"/dashboard"}/>}/>
         <Route path="/about" element={<AboutPage />} />
-        <Route
-          path="/problems"
-          element={isSignedIn ? <ProblemPage /> : <Navigate to="/" />}
-        />
+        <Route path="/dashboard" element={isSignedIn ? <DashboardPage /> : <Navigate to="/" />}/>
+        <Route path="/problems" element={isSignedIn ? <ProblemPage /> : <Navigate to="/" />}/>
       </Routes>
     </>
   );
