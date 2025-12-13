@@ -1,9 +1,7 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
-/* CodeStream Custom Theme Overrides */
 :root {
-  /* Set the default background to your dark slate preference */
   background-color: #020617; /* slate-950 */
   color: #f3f4f6; /* gray-100 */
 }
