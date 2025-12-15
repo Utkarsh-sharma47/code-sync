@@ -4,6 +4,7 @@ import { X, Loader2, Code2, Plus } from 'lucide-react';
 import { PROBLEMS } from '../data/problem';
 import { useCreateSession } from '../hooks/useSessions'; 
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const CreateSessionModal = ({ isOpen, onClose }) => {
   const [selectedProblemId, setSelectedProblemId] = useState('two-sum'); 
@@ -29,11 +30,19 @@ const CreateSessionModal = ({ isOpen, onClose }) => {
       }, 
       {
         onSuccess: (data) => {
+          console.log("CreateSession onSuccess data:", data);
+          const sessionId = data?.session?._id;
+          if (!sessionId) {
+            console.error("CreateSession: sessionId missing in response", data);
+            toast.error("Failed to create session on server. Please check backend logs.");
+            return;
+          }
           onClose();
-          navigate(`/session/${data.session._id}`); // Ensure your API returns 'session' object
+          navigate(`/session/${sessionId}`);
         },
         onError: (error) => {
-            console.error("Creation Failed:", error);
+          console.error("Creation Failed:", error);
+          toast.error(error?.response?.data?.message || "Failed to create session");
         }
       }
     );
