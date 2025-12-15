@@ -13,6 +13,7 @@
     "@clerk/clerk-js": "^5.114.0",
     "@clerk/clerk-react": "^5.58.1",
     "@monaco-editor/react": "^4.7.0",
+    "@stream-io/video-react-sdk": "^1.28.2",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-query": "^5.90.12",
     "@vitejs/plugin-react": "^5.1.1",
@@ -28,6 +29,8 @@
     "react-router": "^7.10.1",
     "react-router-dom": "^7.10.1",
     "root": "github:tanstack/react-query",
+    "stream-chat": "^9.27.1",
+    "stream-chat-react": "^13.13.0",
     "tailwindcss": "^4.1.18",
     "vite": "^7.2.7"
   },

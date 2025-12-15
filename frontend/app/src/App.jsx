@@ -7,6 +7,8 @@ import SessionPage from "./pages/SessionPage";
 import { useUser } from "@clerk/clerk-react";
 import AboutPage from "./pages/AboutPage";
 import Toast, { Toaster } from "react-hot-toast";
+import '@stream-io/video-react-sdk/dist/css/styles.css';
+import 'stream-chat-react/dist/css/v2/index.css';
 
 function App() {
   const { isSignedIn, isLoaded } = useUser();
@@ -57,6 +59,7 @@ function App() {
           path="/session/:sessionId"
           element={isSignedIn ? <SessionPage /> : <Navigate to="/" />}
         />
+        
       </Routes>
     </>
   );

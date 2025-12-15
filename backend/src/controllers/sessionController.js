@@ -143,4 +143,5 @@ export async function endSession(req, res) {
     } catch (error) {
         return res.status(500).json({ message: "Server error" });
     }
+    
 }
