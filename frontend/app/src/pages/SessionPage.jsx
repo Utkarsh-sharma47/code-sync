@@ -1,5 +1,5 @@
 import { useUser } from "@clerk/clerk-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { StreamCall, StreamVideo } from "@stream-io/video-react-sdk";
@@ -28,6 +28,7 @@ function SessionPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState("javascript");
   const [code, setCode] = useState("");
+  const hasJoined = useRef(false);
 
   const { data: sessionData, isLoading: loadingSession, refetch } = useSessionById(sessionId);
   const joinSessionMutation = useJoinSession();
@@ -72,18 +73,28 @@ function SessionPage() {
 
   // Initialize Code
   useEffect(() => {
-    if (problemData?.starterCode?.[selectedLanguage] && !code) {
-      setCode(problemData.starterCode[selectedLanguage]);
-    }
+    if (!problemData?.starterCode) return;
+    const starter = problemData.starterCode[selectedLanguage];
+    if (!starter) return;
+    setCode(starter);
   }, [problemData, selectedLanguage]);
 
   // Auto-Join Logic
+  // reset guard when session id changes
+  useEffect(() => {
+    hasJoined.current = false;
+  }, [sessionId]);
+
   useEffect(() => {
     if (!session || !user || loadingSession) return;
-    if (!isHost && !isParticipant && session.status !== 'completed') {
+    if (session.status === 'completed') return;
+    if (hasJoined.current) return;
+    if (joinSessionMutation.isPending) return;
+    if (!isHost && !isParticipant) {
+        hasJoined.current = true;
         joinSessionMutation.mutate(sessionId, { onSuccess: refetch });
     }
-  }, [session, user, loadingSession, isHost, isParticipant, sessionId]);
+  }, [session, user, loadingSession, isHost, isParticipant, sessionId, refetch, joinSessionMutation]);
 
   // --- RUN CODE LOGIC (With Test Cases) ---
   const handleRunCode = async () => {

@@ -21,10 +21,10 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
     // Prevent double init
     if (initAttempted.current) return;
 
-    // Validation
+    // Validation (allow active sessions even if participant flag is slightly stale)
     if (!session || loadingSession) return;
     if (!session.callId || session.status === "completed") return;
-    if (!isHost && !isParticipant) return;
+    if (!isHost && !isParticipant && session.status !== "active") return;
 
     setIsInitializingCall(true);
     setConnectionError(null);

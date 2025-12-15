@@ -119,7 +119,8 @@ const DashboardPage = () => {
                     const displayTitle = session.sessionName || session.problem || problemDetails.title || "Unknown Session";
                     const displayDiff = session.difficulty || problemDetails.difficulty || "Medium";
                     
-                    const isFull = (session.participants || []).length >= 2;
+                    const participantCount = 1 + (session.participant ? 1 : 0);
+                    const isFull = participantCount >= 2;
 
                     return (
                       <div key={session._id} className="bg-slate-950 border border-white/5 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -131,7 +132,9 @@ const DashboardPage = () => {
                             <div className="flex items-center gap-3 text-sm text-slate-400 mt-1">
                               {/* USE THE RESOLVED DIFFICULTY */}
                               <span className="px-2 py-0.5 rounded text-xs font-bold bg-slate-800 border border-slate-700">{displayDiff}</span>
-                              <span className="flex items-center gap-1"><Users size={14}/> {(session.participants || []).length}/2</span>
+                              <span className={`flex items-center gap-1 ${isFull ? 'text-red-400' : 'text-slate-400'}`}>
+                                <Users size={14}/> 👤 {participantCount}/2
+                              </span>
                               {isFull && <span className="bg-red-500/20 text-red-400 text-[10px] font-bold px-2 py-0.5 rounded border border-red-500/20">FULL</span>}
                             </div>
                           </div>

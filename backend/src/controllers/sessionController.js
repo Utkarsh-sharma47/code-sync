@@ -125,17 +125,25 @@ export async function joinSession(req, res) {
         if (!session) return res.status(404).json({ message: "Session not found" });
         if (session.status !== 'pending' && session.status !== 'active') return res.status(400).json({ message: "Not available" });
         if (session.host.toString() === userId.toString()) return res.status(400).json({ message: "Cannot join own session" });
-        if (session.participant) return res.status(400).json({ message: "Session full" });
+        if (session.participant) return res.status(400).json({ message: "Session is full (2/2 participants)" });
 
-        session.participant = userObjectId;
-        session.status = "active"; 
-        await session.save();
-        await session.populate('host participant', 'firstName lastName clerkId');
+        // Atomic claim of the participant slot to avoid race conditions
+        const updatedSession = await Session.findOneAndUpdate(
+            { _id: id, participant: { $in: [null, undefined] } },
+            { participant: userObjectId, participantClerkId: clerkId, status: "active" },
+            { new: true }
+        )
+        .populate('host', 'firstName lastName clerkId')
+        .populate('participant', 'firstName lastName clerkId');
 
-        const channel = chatClient.channel("messaging", session.callId);
+        if (!updatedSession) {
+            return res.status(400).json({ message: "Session is full (2/2 participants)" });
+        }
+
+        const channel = chatClient.channel("messaging", updatedSession.callId);
         await channel.addMembers([clerkId]);
 
-        return res.status(200).json({ message: "Joined", session });
+        return res.status(200).json({ message: "Joined", session: updatedSession });
     } catch (error) {
         return res.status(500).json({ message: "Server error" });
     }
