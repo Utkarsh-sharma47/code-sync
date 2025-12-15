@@ -17,14 +17,20 @@ export async function createSession(req, res) {
         const callId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
         
         // 1. Create in MongoDB
-        const session = await Session.create({
-            problem,      // Saves "Two Sum"
-            problemId,    // Saves "two-sum"
-            difficulty,
-            host: userId,
-            callId,
-            sessionName: sessionName || `Session: ${problem}` // Default name
-        });
+        let session;
+        try {
+            session = await Session.create({
+                problem,      // Saves "Two Sum"
+                problemId,    // Saves "two-sum"
+                difficulty,
+                host: userId,
+                callId,
+                sessionName: sessionName || `Session: ${problem}` // Default name
+            });
+        } catch (dbError) {
+            console.error("Session create DB error:", dbError);
+            return res.status(500).json({ message: "Failed to create session" });
+        }
 
         // 2. Create in Stream
         try {

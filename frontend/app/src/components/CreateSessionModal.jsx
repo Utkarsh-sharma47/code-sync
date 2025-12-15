@@ -29,8 +29,14 @@ const CreateSessionModal = ({ isOpen, onClose }) => {
       }, 
       {
         onSuccess: (data) => {
+          console.log("CreateSession onSuccess data:", data);
+          const sessionId = data?.session?._id;
+          if (!sessionId) {
+            console.error("CreateSession: sessionId missing in response", data);
+            return;
+          }
           onClose();
-          navigate(`/session/${data.session._id}`); // Ensure your API returns 'session' object
+          navigate(`/session/${sessionId}`);
         },
         onError: (error) => {
             console.error("Creation Failed:", error);

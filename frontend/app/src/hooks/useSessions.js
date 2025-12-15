@@ -5,7 +5,15 @@ import { sessionApi } from "../api/sessions";
 export const useCreateSession = () => {
   return useMutation({
     mutationFn: sessionApi.createSession,
-    onSuccess: () => toast.success("Session created successfully!"),
+    onSuccess: (data) => {
+      console.log("CreateSession success payload:", data);
+      if (!data?.session?._id) {
+        console.warn("CreateSession: missing session._id in response", data);
+        toast.error("Session created, but server did not return an ID. Please try again or contact support.");
+        return;
+      }
+      toast.success("Session created successfully!");
+    },
     onError: (error) => toast.error(error.response?.data?.message || "Failed to create session"),
   });
 };
