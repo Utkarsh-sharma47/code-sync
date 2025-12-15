@@ -114,6 +114,7 @@ export async function joinSession(req, res) {
         const { id } = req.params;
         const userId = req.user?._id;
         const clerkId = req.user.clerkId;
+        const fullName = `${req.user.firstName} ${req.user.lastName}`;
         
         if (!userId) {
             return res.status(400).json({ message: "User missing on request" });
@@ -126,6 +127,11 @@ export async function joinSession(req, res) {
         if (session.status !== 'pending' && session.status !== 'active') return res.status(400).json({ message: "Not available" });
         if (session.host.toString() === userId.toString()) return res.status(400).json({ message: "Cannot join own session" });
         if (session.participant) return res.status(400).json({ message: "Session is full (2/2 participants)" });
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
 
         // Atomic claim of the participant slot to avoid race conditions
         const updatedSession = await Session.findOneAndUpdate(
@@ -140,8 +146,37 @@ export async function joinSession(req, res) {
             return res.status(400).json({ message: "Session is full (2/2 participants)" });
         }
 
-        const channel = chatClient.channel("messaging", updatedSession.callId);
-        await channel.addMembers([clerkId]);
+        // Ensure the participant exists in Stream Chat and is a channel member
+        try {
+            // Ensure channel exists (idempotent create)
+            const channel = chatClient.channel("messaging", updatedSession.callId, {
+                name: updatedSession.sessionName,
+                created_by_id: updatedSession.host?.clerkId || clerkId,
+            });
+            try {
+                await channel.create();
+            } catch (createErr) {
+                // Ignore "already exists" errors
+                if (!(createErr?.code === 17 || createErr?.message?.includes("already"))) {
+                    throw createErr;
+                }
+            }
+
+            await chatClient.upsertUser({
+                id: clerkId,
+                name: fullName || user.username || "Unknown",
+                image: req.user.image || user.image || user.imageUrl || "",
+                role: "user",
+            });
+
+            // Add both host and participant to be safe (host might have been created without membership)
+            const memberIds = [clerkId];
+            if (updatedSession.host?.clerkId) memberIds.push(updatedSession.host.clerkId);
+            await channel.addMembers(memberIds);
+        } catch (chatError) {
+            console.error("Chat membership error:", chatError);
+            return res.status(500).json({ message: "Failed to join chat channel" });
+        }
 
         return res.status(200).json({ message: "Joined", session: updatedSession });
     } catch (error) {

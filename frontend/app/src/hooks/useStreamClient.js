@@ -66,8 +66,20 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
 
       // 5. Watch Channel
       const chatChannel = chatClientInstance.channel("messaging", session.callId);
-      await chatChannel.watch();
-      setChannel(chatChannel);
+      try {
+        await chatChannel.watch();
+        setChannel(chatChannel);
+      } catch (watchError) {
+        console.error("Channel watch failed, retrying once:", watchError);
+        try {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await chatChannel.watch();
+          setChannel(chatChannel);
+        } catch (retryError) {
+          console.error("Channel watch retry failed:", retryError);
+          throw retryError;
+        }
+      }
 
     } catch (error) {
       console.error("Stream Connection Error:", error);
