@@ -45,7 +45,8 @@ function SessionPage() {
     chatClient, 
     isInitializingCall, 
     streamClient, 
-    connectionError // <--- FIX: Added this so the error screen works
+    connectionError, // <--- FIX: Added this so the error screen works
+    retryConnection
   } = useStreamClient(
     session,
     loadingSession,
@@ -266,7 +267,7 @@ function SessionPage() {
                         <h3 className="text-lg font-bold text-white mb-2">Connection Failed</h3>
                         <p className="text-sm opacity-80 mb-6">{connectionError}</p>
                         <button 
-                            onClick={() => window.location.reload()} 
+                            onClick={retryConnection} 
                             className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold text-sm transition-colors"
                         >
                             Retry Connection

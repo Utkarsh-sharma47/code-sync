@@ -72,7 +72,7 @@ const VideoCallUI = ({ chatClient, channel }) => {
         <div className="absolute top-4 left-4 z-20 flex items-center gap-3">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900/60 backdrop-blur-md rounded-full border border-white/5 text-xs font-medium text-slate-300">
             <Users size={14} className="text-blue-400" />
-            <span>{participantCount} Online</span>
+            <span>👤 {participantCount} Online</span>
           </div>
         </div>
 

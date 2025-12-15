@@ -72,15 +72,23 @@ export async function getActiveSessions(req, res) {
 
 export async function getRecentSessions(req, res) {
     try {
-        const userId = req.user._id;
-        
-        // FIX: Ensure ID is an ObjectId so the query finds your history
-        const userObjectId = new mongoose.Types.ObjectId(userId);
+        const userId = req.user?._id;
+
+        if (!userId) {
+            return res.status(400).json({ message: "User missing on request" });
+        }
+
+        // Ensure ID is an ObjectId so the query finds your history
+        const userObjectId = new mongoose.Types.ObjectId(userId.toString());
 
         const recentSessions = await Session.find({
             $or: [{ host: userObjectId }, { participant: userObjectId }],
             status: 'completed' // Only completed sessions show in history
-        }).sort({ updatedAt: -1 }).limit(20);
+        })
+        .populate('host', 'firstName lastName clerkId')
+        .populate('participant', 'firstName lastName clerkId')
+        .sort({ updatedAt: -1 })
+        .limit(20);
 
         return res.status(200).json(recentSessions);
     } catch (error) {
@@ -104,8 +112,14 @@ export async function getSessionById(req, res) {
 export async function joinSession(req, res) {
     try {
         const { id } = req.params;
-        const userId = req.user._id;
+        const userId = req.user?._id;
         const clerkId = req.user.clerkId;
+        
+        if (!userId) {
+            return res.status(400).json({ message: "User missing on request" });
+        }
+
+        const userObjectId = new mongoose.Types.ObjectId(userId.toString());
         const session = await Session.findById(id);
 
         if (!session) return res.status(404).json({ message: "Session not found" });
@@ -113,9 +127,10 @@ export async function joinSession(req, res) {
         if (session.host.toString() === userId.toString()) return res.status(400).json({ message: "Cannot join own session" });
         if (session.participant) return res.status(400).json({ message: "Session full" });
 
-        session.participant = userId;
+        session.participant = userObjectId;
         session.status = "active"; 
         await session.save();
+        await session.populate('host participant', 'firstName lastName clerkId');
 
         const channel = chatClient.channel("messaging", session.callId);
         await channel.addMembers([clerkId]);

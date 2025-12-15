@@ -24,6 +24,7 @@ const DashboardPage = () => {
   // 2. SAFETY CHECK: Convert to array or empty list to prevent .map() crashes
   const activeSessions = Array.isArray(activeSessionsData) ? activeSessionsData : [];
   const recentSessions = Array.isArray(recentSessionsData) ? recentSessionsData : [];
+  const totalSessions = activeSessions.length + recentSessions.length;
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -89,7 +90,7 @@ const DashboardPage = () => {
               <motion.div variants={itemVariants} className="bg-slate-900/50 border border-white/5 p-6 rounded-3xl h-[160px] flex flex-col justify-between">
                 <div className="absolute top-4 right-4 p-2 bg-blue-500/10 rounded-full text-blue-400"><Trophy size={24} /></div>
                 <div>
-                  <div className="text-5xl font-black text-white mb-2">{loadingRecent ? '...' : recentSessions.length}</div>
+                  <div className="text-5xl font-black text-white mb-2">{loadingRecent ? '...' : totalSessions}</div>
                   <div className="text-slate-400 font-medium">Total Sessions</div>
                 </div>
               </motion.div>
