@@ -20,7 +20,13 @@ const PORT = process.env.PORT || ENV.PORT || 5000;
 
 //middleware
 app.use(express.json());
-app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }));
+app.use(cors({ 
+  origin: [
+    ENV.CLIENT_URL,                    // Your local or env-defined URL
+    "https://code-sync-0xoi.onrender.com" // Your deployed frontend
+  ], 
+  credentials: true 
+}));
 // this add auth field to req object: req.auth()
 app.use(clerkMiddleware());
 
