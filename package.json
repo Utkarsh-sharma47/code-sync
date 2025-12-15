@@ -8,8 +8,8 @@
     "install:frontend": "npm install --prefix frontend/app",
     "build:frontend": "npm run build --prefix frontend/app",
     "build": "npm run install:backend && npm run install:frontend && npm run build:frontend",
-    "start:server": "npm run start --prefix backend",
-    "start": "npm run build && npm run start:server"
+    "start": "npm run start:server",
+    "start:server": "cd backend && npm start"
   },
   "repository": {
     "type": "git",

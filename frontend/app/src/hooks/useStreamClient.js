@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { StreamChat } from "stream-chat";
 import toast from "react-hot-toast";
 import { initializeStreamClient, disconnectStreamClient } from "../lib/stream";
@@ -14,66 +14,72 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
   const [connectionError, setConnectionError] = useState(null); // New Error State
 
   const initAttempted = useRef(false);
+  const videoCallRef = useRef(null);
+  const chatClientRef = useRef(null);
 
-  useEffect(() => {
+  const initCall = useCallback(async () => {
+    // Prevent double init
+    if (initAttempted.current) return;
+
+    // Validation (allow active sessions even if participant flag is slightly stale)
+    if (!session || loadingSession) return;
+    if (!session.callId || session.status === "completed") return;
+    if (!isHost && !isParticipant && session.status !== "active") return;
+
+    setIsInitializingCall(true);
+    setConnectionError(null);
+    initAttempted.current = true;
+
     let videoCall = null;
     let chatClientInstance = null;
 
-    const initCall = async () => {
-      // Prevent double init
-      if (initAttempted.current) return;
+    try {
+      // 1. Get Token & user profile (Clerk ID)
+      const tokenPayload = await sessionApi.getStreamToken();
+      const { token, userId, userName, userImage } = tokenPayload || {};
+      if (!token || !userId) throw new Error("Failed to fetch Stream token from backend");
+
+      // 2. Init Video Client
+      const client = await initializeStreamClient(
+        { id: userId, name: userName, image: userImage },
+        token
+      );
+      setStreamClient(client);
+
+      // 3. Join Call
+      videoCall = client.call("default", session.callId);
+      await videoCall.join({ create: true });
+      videoCallRef.current = videoCall;
+      setCall(videoCall);
+
+      // 4. Init Chat Client
+      const apiKey = import.meta.env.VITE_STREAM_API_KEY;
+      if (!apiKey) throw new Error("Stream API Key is missing in .env");
       
-      // Validation
-      if (!session?.callId || session.status === "completed") return;
-      if (!isHost && !isParticipant) return;
+      chatClientInstance = StreamChat.getInstance(apiKey);
+      await chatClientInstance.connectUser(
+        { id: userId, name: userName, image: userImage },
+        token
+      );
+      chatClientRef.current = chatClientInstance;
+      setChatClient(chatClientInstance);
 
-      setIsInitializingCall(true);
-      setConnectionError(null);
-      initAttempted.current = true;
+      // 5. Watch Channel
+      const chatChannel = chatClientInstance.channel("messaging", session.callId);
+      await chatChannel.watch();
+      setChannel(chatChannel);
 
-      try {
-        // 1. Get Token
-        const { token, userId, userName, userImage } = await sessionApi.getStreamToken();
-        if (!token) throw new Error("Failed to fetch Stream token from backend");
+    } catch (error) {
+      console.error("Stream Connection Error:", error);
+      setConnectionError(error.message || "Connection failed. Please retry.");
+      toast.error("Video connection failed");
+      initAttempted.current = false; // Allow retry
+    } finally {
+      setIsInitializingCall(false);
+    }
+  }, [session, loadingSession, isHost, isParticipant]);
 
-        // 2. Init Video Client
-        const client = await initializeStreamClient(
-          { id: userId, name: userName, image: userImage },
-          token
-        );
-        setStreamClient(client);
-
-        // 3. Join Call
-        videoCall = client.call("default", session.callId);
-        await videoCall.join({ create: true });
-        setCall(videoCall);
-
-        // 4. Init Chat Client
-        const apiKey = import.meta.env.VITE_STREAM_API_KEY;
-        if (!apiKey) throw new Error("Stream API Key is missing in .env");
-        
-        chatClientInstance = StreamChat.getInstance(apiKey);
-        await chatClientInstance.connectUser(
-          { id: userId, name: userName, image: userImage },
-          token
-        );
-        setChatClient(chatClientInstance);
-
-        // 5. Watch Channel
-        const chatChannel = chatClientInstance.channel("messaging", session.callId);
-        await chatChannel.watch();
-        setChannel(chatChannel);
-
-      } catch (error) {
-        console.error("Stream Connection Error:", error);
-        setConnectionError(error.message || "Connection failed");
-        toast.error("Video connection failed");
-        initAttempted.current = false; // Allow retry
-      } finally {
-        setIsInitializingCall(false);
-      }
-    };
-
+  useEffect(() => {
     if (session && !loadingSession) {
       initCall();
     }
@@ -83,8 +89,8 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
       initAttempted.current = false;
       (async () => {
         try {
-          if (videoCall) await videoCall.leave();
-          if (chatClientInstance) await chatClientInstance.disconnectUser();
+          if (videoCallRef.current) await videoCallRef.current.leave();
+          if (chatClientRef.current) await chatClientRef.current.disconnectUser();
           await disconnectStreamClient();
         } catch (error) {
           console.error("Cleanup error:", error);
@@ -95,7 +101,12 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
       setChatClient(null);
       setChannel(null);
     };
-  }, [session, loadingSession, isHost, isParticipant]);
+  }, [session, loadingSession, initCall]);
+
+  const retryConnection = async () => {
+    initAttempted.current = false;
+    await initCall();
+  };
 
   return {
     streamClient,
@@ -104,6 +115,7 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
     channel,
     isInitializingCall,
     connectionError, // Exported this
+    retryConnection,
   };
 }
 

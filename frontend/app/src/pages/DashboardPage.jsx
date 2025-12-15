@@ -24,6 +24,7 @@ const DashboardPage = () => {
   // 2. SAFETY CHECK: Convert to array or empty list to prevent .map() crashes
   const activeSessions = Array.isArray(activeSessionsData) ? activeSessionsData : [];
   const recentSessions = Array.isArray(recentSessionsData) ? recentSessionsData : [];
+  const totalSessions = activeSessions.length + recentSessions.length;
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -89,7 +90,7 @@ const DashboardPage = () => {
               <motion.div variants={itemVariants} className="bg-slate-900/50 border border-white/5 p-6 rounded-3xl h-[160px] flex flex-col justify-between">
                 <div className="absolute top-4 right-4 p-2 bg-blue-500/10 rounded-full text-blue-400"><Trophy size={24} /></div>
                 <div>
-                  <div className="text-5xl font-black text-white mb-2">{loadingRecent ? '...' : recentSessions.length}</div>
+                  <div className="text-5xl font-black text-white mb-2">{loadingRecent ? '...' : totalSessions}</div>
                   <div className="text-slate-400 font-medium">Total Sessions</div>
                 </div>
               </motion.div>
@@ -118,7 +119,8 @@ const DashboardPage = () => {
                     const displayTitle = session.sessionName || session.problem || problemDetails.title || "Unknown Session";
                     const displayDiff = session.difficulty || problemDetails.difficulty || "Medium";
                     
-                    const isFull = (session.participants || []).length >= 2;
+                    const participantCount = 1 + (session.participant ? 1 : 0);
+                    const isFull = participantCount >= 2;
 
                     return (
                       <div key={session._id} className="bg-slate-950 border border-white/5 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -130,7 +132,9 @@ const DashboardPage = () => {
                             <div className="flex items-center gap-3 text-sm text-slate-400 mt-1">
                               {/* USE THE RESOLVED DIFFICULTY */}
                               <span className="px-2 py-0.5 rounded text-xs font-bold bg-slate-800 border border-slate-700">{displayDiff}</span>
-                              <span className="flex items-center gap-1"><Users size={14}/> {(session.participants || []).length}/2</span>
+                              <span className={`flex items-center gap-1 ${isFull ? 'text-red-400' : 'text-slate-400'}`}>
+                                <Users size={14}/> 👤 {participantCount}/2
+                              </span>
                               {isFull && <span className="bg-red-500/20 text-red-400 text-[10px] font-bold px-2 py-0.5 rounded border border-red-500/20">FULL</span>}
                             </div>
                           </div>

@@ -72,15 +72,23 @@ export async function getActiveSessions(req, res) {
 
 export async function getRecentSessions(req, res) {
     try {
-        const userId = req.user._id;
-        
-        // FIX: Ensure ID is an ObjectId so the query finds your history
-        const userObjectId = new mongoose.Types.ObjectId(userId);
+        const userId = req.user?._id;
+
+        if (!userId) {
+            return res.status(400).json({ message: "User missing on request" });
+        }
+
+        // Ensure ID is an ObjectId so the query finds your history
+        const userObjectId = new mongoose.Types.ObjectId(userId.toString());
 
         const recentSessions = await Session.find({
             $or: [{ host: userObjectId }, { participant: userObjectId }],
             status: 'completed' // Only completed sessions show in history
-        }).sort({ updatedAt: -1 }).limit(20);
+        })
+        .populate('host', 'firstName lastName clerkId')
+        .populate('participant', 'firstName lastName clerkId')
+        .sort({ updatedAt: -1 })
+        .limit(20);
 
         return res.status(200).json(recentSessions);
     } catch (error) {
@@ -104,23 +112,38 @@ export async function getSessionById(req, res) {
 export async function joinSession(req, res) {
     try {
         const { id } = req.params;
-        const userId = req.user._id;
+        const userId = req.user?._id;
         const clerkId = req.user.clerkId;
+        
+        if (!userId) {
+            return res.status(400).json({ message: "User missing on request" });
+        }
+
+        const userObjectId = new mongoose.Types.ObjectId(userId.toString());
         const session = await Session.findById(id);
 
         if (!session) return res.status(404).json({ message: "Session not found" });
         if (session.status !== 'pending' && session.status !== 'active') return res.status(400).json({ message: "Not available" });
         if (session.host.toString() === userId.toString()) return res.status(400).json({ message: "Cannot join own session" });
-        if (session.participant) return res.status(400).json({ message: "Session full" });
+        if (session.participant) return res.status(400).json({ message: "Session is full (2/2 participants)" });
 
-        session.participant = userId;
-        session.status = "active"; 
-        await session.save();
+        // Atomic claim of the participant slot to avoid race conditions
+        const updatedSession = await Session.findOneAndUpdate(
+            { _id: id, participant: { $in: [null, undefined] } },
+            { participant: userObjectId, participantClerkId: clerkId, status: "active" },
+            { new: true }
+        )
+        .populate('host', 'firstName lastName clerkId')
+        .populate('participant', 'firstName lastName clerkId');
 
-        const channel = chatClient.channel("messaging", session.callId);
+        if (!updatedSession) {
+            return res.status(400).json({ message: "Session is full (2/2 participants)" });
+        }
+
+        const channel = chatClient.channel("messaging", updatedSession.callId);
         await channel.addMembers([clerkId]);
 
-        return res.status(200).json({ message: "Joined", session });
+        return res.status(200).json({ message: "Joined", session: updatedSession });
     } catch (error) {
         return res.status(500).json({ message: "Server error" });
     }
