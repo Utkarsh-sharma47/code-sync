@@ -40,7 +40,7 @@ app.get("/video-calls", protectRoute, (req, res) => {
 });
 
 app.get("/health", (req, res) => {
-  req.auth;
+  req.auth();
   res.json({ message: "Health check for video calls" });
 });
 

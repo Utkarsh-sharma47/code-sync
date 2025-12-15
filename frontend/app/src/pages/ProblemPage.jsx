@@ -149,7 +149,7 @@ const ProblemPage = () => {
                 transition={{ duration: 0.2 }}
                 className="group"
                 >
-                <Link to={`/problems/${problem.id}`} className="block">
+                <Link to={`/problem/${problem.id}`} className="block">
                     {/* Card Container */}
                     <div className="relative overflow-hidden bg-slate-900/40 backdrop-blur-md border border-white/10 rounded-xl p-5 md:p-6 transition-all duration-300 group-hover:border-pink-500/50 group-hover:shadow-[0_0_20px_rgba(236,72,153,0.15)]">
                     
