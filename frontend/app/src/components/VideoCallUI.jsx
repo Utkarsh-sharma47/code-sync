@@ -72,7 +72,7 @@ const VideoCallUI = ({ chatClient, channel }) => {
         <div className="absolute top-4 left-4 z-20 flex items-center gap-3">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900/60 backdrop-blur-md rounded-full border border-white/5 text-xs font-medium text-slate-300">
             <Users size={14} className="text-blue-400" />
-            <span>👤 {participantCount} Online</span>
+            <span>{participantCount} Online</span>
           </div>
         </div>
 
@@ -165,42 +165,44 @@ const VideoCallUI = ({ chatClient, channel }) => {
 
       {/* RIGHT: Chat Sidebar (Sliding Panel) */}
       <div
-        className={`relative z-10 flex flex-col bg-slate-950 border-l border-white/10 transition-all duration-300 ease-in-out ${
+        className={`relative z-10 flex flex-col h-full min-h-0 bg-slate-950 border-l border-white/10 transition-all duration-300 ease-in-out ${
           chatOpen ? "w-full lg:w-1/3 xl:w-1/4 translate-x-0" : "w-0 translate-x-full hidden"
         }`}
       >
         {chatClient && channel && (
-          <Chat client={chatClient} theme="str-chat__theme-dark">
-            <Channel channel={channel}>
-              <Window>
-                {/* Chat Header */}
-                <div className="h-14 flex items-center justify-between px-4 border-b border-white/10 bg-slate-950">
-                  <div className="flex items-center gap-2">
-                    <MessageSquare size={16} className="text-blue-400" />
-                    <span className="text-sm font-bold text-white tracking-wide">
-                      LIVE CHAT
-                    </span>
+          <div className="flex flex-col flex-1 min-h-0">
+            <Chat client={chatClient} theme="str-chat__theme-dark">
+              <Channel channel={channel}>
+                <Window>
+                  {/* Chat Header */}
+                  <div className="h-14 flex items-center justify-between px-4 border-b border-white/10 bg-slate-950">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare size={16} className="text-blue-400" />
+                      <span className="text-sm font-bold text-white tracking-wide">
+                        LIVE CHAT
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => setActiveTab("video")}
+                      className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                    >
+                      <Maximize2 size={16} />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setActiveTab("video")}
-                    className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
-                  >
-                    <Maximize2 size={16} />
-                  </button>
-                </div>
 
-                {/* Messages Area */}
-                <div className="flex-1 bg-slate-950/50">
-                  <MessageList />
-                </div>
+                  {/* Messages Area */}
+                  <div className="flex-1 min-h-0 bg-slate-950/50">
+                    <MessageList />
+                  </div>
 
-                {/* Input Area */}
-                <div className="p-2 bg-slate-950 border-t border-white/10">
-                  <MessageInput />
-                </div>
-              </Window>
-            </Channel>
-          </Chat>
+                  {/* Input Area */}
+                  <div className="p-2 bg-slate-950 border-t border-white/10">
+                    <MessageInput />
+                  </div>
+                </Window>
+              </Channel>
+            </Chat>
+          </div>
         )}
       </div>
     </div>
