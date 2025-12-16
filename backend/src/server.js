@@ -91,7 +91,7 @@ const frontendPath = path.resolve(__dirname, "../../frontend/app/dist");
 app.use(express.static(frontendPath));
 
 // SPA fallback: Only serve index.html for non-API routes that don't match static files
-app.get("*", (req, res, next) => {
+app.get(/^(.*)$/, (req, res, next) => {
   // Skip if this is an API route
   if (req.path.startsWith("/api/")) {
     return next();
