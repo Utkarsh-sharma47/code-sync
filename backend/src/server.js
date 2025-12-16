@@ -86,11 +86,21 @@ app.get("/health", (req, res) => {
 });
 
 // Serve frontend build (default to production behaviour)
+// IMPORTANT: Static files must be served BEFORE the catch-all route
 const frontendPath = path.resolve(__dirname, "../../frontend/app/dist");
 app.use(express.static(frontendPath));
 
-// SPA fallback
-app.use((req, res) => {
+// SPA fallback: Only serve index.html for non-API routes that don't match static files
+app.get("*", (req, res, next) => {
+  // Skip if this is an API route
+  if (req.path.startsWith("/api/")) {
+    return next();
+  }
+  // Skip if this looks like a static file request (has an extension)
+  if (req.path.match(/\.[\w]+$/)) {
+    return next();
+  }
+  // Serve index.html for all other routes (SPA routing)
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
