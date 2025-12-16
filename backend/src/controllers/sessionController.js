@@ -6,7 +6,7 @@ import { chatClient } from "../lib/stream.js";
 
 export async function createSession(req, res) {
     try {
-        const { problem, difficulty, problemId, sessionName } = req.body;
+        const { problem, difficulty, problemId, name, sessionName } = req.body;
         const userId = req.user._id;
         const clerkId = req.user.clerkId;
 
@@ -14,16 +14,18 @@ export async function createSession(req, res) {
             return res.status(400).json({ message: "Problem details are missing" });
         }
 
+        // Prefer the new "name" field, fallback to legacy "sessionName", then default.
+        const resolvedName = name || sessionName || `Session: ${problem}`;
         const callId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
         
         // 1. Create in MongoDB
         const session = await Session.create({
+            name: resolvedName,
             problem,      // Saves "Two Sum"
             problemId,    // Saves "two-sum"
             difficulty,
             host: userId,
             callId,
-            sessionName: sessionName || `Session: ${problem}` // Default name
         });
 
         // 2. Create in Stream
@@ -35,13 +37,13 @@ export async function createSession(req, res) {
                         problem, 
                         difficulty, 
                         sessionId: session._id.toString(),
-                        title: session.sessionName 
+                        title: resolvedName 
                     }
                 },
             });
             
             const channel = chatClient.channel("messaging", callId, {
-                name: session.sessionName,
+                name: resolvedName,
                 created_by_id: clerkId,
                 members: [clerkId]
             });
@@ -60,7 +62,18 @@ export async function createSession(req, res) {
 
 export async function getActiveSessions(req, res) {
     try {
-        const activeSessions = await Session.find({ status: { $in: ['active', 'pending'] } })
+        const userId = req.user?._id;
+
+        if (!userId) {
+            return res.status(400).json({ message: "User missing on request" });
+        }
+
+        const userObjectId = new mongoose.Types.ObjectId(userId.toString());
+
+        const activeSessions = await Session.find({ 
+                status: { $in: ['active', 'pending'] },
+                $or: [{ host: userObjectId }, { participant: userObjectId }]
+            })
             .populate('host', 'firstName lastName clerkId')
             .populate('participant', 'firstName lastName clerkId')
             .sort({ createdAt: -1 });
@@ -99,10 +112,29 @@ export async function getRecentSessions(req, res) {
 
 export async function getSessionById(req, res) {
     try {
+        const userId = req.user?._id;
+        if (!userId) {
+            return res.status(400).json({ message: "User missing on request" });
+        }
+
         const session = await Session.findById(req.params.id)
             .populate('host', 'firstName lastName clerkId')
             .populate('participant', 'firstName lastName clerkId');
+
         if (!session) return res.status(404).json({ message: "Session not found" });
+
+        // Secure entry for direct-link access:
+        // - Host always allowed
+        // - Existing participant allowed
+        // - If seat free, allow (client will call join endpoint to claim)
+        // - Otherwise, deny
+        const isHost = session.host?.toString() === userId.toString();
+        const isParticipant = session.participant && session.participant.toString() === userId.toString();
+
+        if (!isHost && !isParticipant && session.participant) {
+            return res.status(403).json({ message: "Session is full" });
+        }
+
         return res.status(200).json(session);
     } catch (error) {
         return res.status(500).json({ message: "Server error" });
@@ -124,9 +156,22 @@ export async function joinSession(req, res) {
         const session = await Session.findById(id);
 
         if (!session) return res.status(404).json({ message: "Session not found" });
-        if (session.status !== 'pending' && session.status !== 'active') return res.status(400).json({ message: "Not available" });
-        if (session.host.toString() === userId.toString()) return res.status(400).json({ message: "Cannot join own session" });
-        if (session.participant) return res.status(400).json({ message: "Session is full (2/2 participants)" });
+        if (session.status !== 'pending' && session.status !== 'active') {
+            return res.status(400).json({ message: "Not available" });
+        }
+
+        const isHost = session.host?.toString() === userId.toString();
+        const isExistingParticipant = session.participant && session.participant.toString() === userId.toString();
+
+        // Host or already-joined participant: allow without changing seats
+        if (isHost || isExistingParticipant) {
+            return res.status(200).json({ message: "Already joined", session });
+        }
+
+        // Seat is taken by someone else -> deny
+        if (session.participant && !isExistingParticipant) {
+            return res.status(403).json({ message: "Session is full" });
+        }
 
         const user = await User.findById(userId);
         if (!user) {
@@ -135,22 +180,24 @@ export async function joinSession(req, res) {
 
         // Atomic claim of the participant slot to avoid race conditions
         const updatedSession = await Session.findOneAndUpdate(
-            { _id: id, participant: { $in: [null, undefined] } },
-            { participant: userObjectId, participantClerkId: clerkId, status: "active" },
-            { new: true }
-        )
-        .populate('host', 'firstName lastName clerkId')
-        .populate('participant', 'firstName lastName clerkId');
+                { _id: id, participant: { $in: [null, undefined] } },
+                { participant: userObjectId, participantClerkId: clerkId, status: "active" },
+                { new: true }
+            )
+            .populate('host', 'firstName lastName clerkId')
+            .populate('participant', 'firstName lastName clerkId');
 
         if (!updatedSession) {
-            return res.status(400).json({ message: "Session is full (2/2 participants)" });
+            // Someone else claimed the seat in between our checks
+            return res.status(403).json({ message: "Session is full" });
         }
 
         // Ensure the participant exists in Stream Chat and is a channel member
         try {
             // Ensure channel exists (idempotent create)
+            const resolvedName = updatedSession.name || updatedSession.sessionName;
             const channel = chatClient.channel("messaging", updatedSession.callId, {
-                name: updatedSession.sessionName,
+                name: resolvedName,
                 created_by_id: updatedSession.host?.clerkId || clerkId,
             });
             try {
@@ -162,6 +209,7 @@ export async function joinSession(req, res) {
                 }
             }
 
+            // Upsert participant user in Stream Chat
             await chatClient.upsertUser({
                 id: clerkId,
                 name: fullName || user.username || "Unknown",
@@ -169,10 +217,17 @@ export async function joinSession(req, res) {
                 role: "user",
             });
 
-            // Add both host and participant to be safe (host might have been created without membership)
+            // Add both host and new participant as channel members
             const memberIds = [clerkId];
             if (updatedSession.host?.clerkId) memberIds.push(updatedSession.host.clerkId);
+
             await channel.addMembers(memberIds);
+            console.log(
+                "[joinSession] Added chat members to channel",
+                updatedSession.callId,
+                "members:",
+                memberIds
+            );
         } catch (chatError) {
             console.error("Chat membership error:", chatError);
             return res.status(500).json({ message: "Failed to join chat channel" });

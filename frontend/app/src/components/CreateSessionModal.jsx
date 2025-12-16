@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 
 const CreateSessionModal = ({ isOpen, onClose }) => {
   const [selectedProblemId, setSelectedProblemId] = useState('two-sum'); 
+  const [sessionName, setSessionName] = useState('');
   const { mutate: createSession, isPending } = useCreateSession();
   const navigate = useNavigate();
 
@@ -26,7 +27,8 @@ const CreateSessionModal = ({ isOpen, onClose }) => {
         // FIX: The backend expects 'problem', not 'title'
         problem: problemDetails.title,  
         difficulty: problemDetails.difficulty,
-        problemId: selectedProblemId // Optional: keep sending ID if you add support for it later
+        problemId: selectedProblemId, // Optional: keep sending ID if you add support for it later
+        name: sessionName?.trim() || undefined,
       }, 
       {
         onSuccess: (data) => {
@@ -77,6 +79,19 @@ const CreateSessionModal = ({ isOpen, onClose }) => {
               </div>
 
               <div className="space-y-6">
+                <div>
+                  <label className="text-sm font-medium text-slate-400 mb-2 block">
+                    Session Name <span className="text-slate-500">(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={sessionName}
+                    onChange={(e) => setSessionName(e.target.value)}
+                    placeholder="e.g. Frontend Interview with John"
+                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all"
+                  />
+                </div>
+
                 <div>
                   <label className="text-sm font-medium text-slate-400 mb-2 block">Select Problem <span className="text-red-500">*</span></label>
                   <div className="relative">

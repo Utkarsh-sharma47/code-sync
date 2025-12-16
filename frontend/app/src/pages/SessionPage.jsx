@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { StreamCall, StreamVideo } from "@stream-io/video-react-sdk";
-import { Loader2, ChevronLeft, Cpu, AlertTriangle, LogOut } from "lucide-react";
+import { Loader2, ChevronLeft, Cpu, AlertTriangle, LogOut, Link2 } from "lucide-react";
 import confetti from "canvas-confetti";
 import toast from "react-hot-toast";
 
@@ -29,8 +29,9 @@ function SessionPage() {
   const [selectedLanguage, setSelectedLanguage] = useState("javascript");
   const [code, setCode] = useState("");
   const hasJoined = useRef(false);
+  const [accessDenied, setAccessDenied] = useState(false);
 
-  const { data: sessionData, isLoading: loadingSession, refetch } = useSessionById(sessionId);
+  const { data: sessionData, isLoading: loadingSession, isError, error, refetch } = useSessionById(sessionId);
   const joinSessionMutation = useJoinSession();
   const endSessionMutation = useEndSession();
 
@@ -90,11 +91,27 @@ function SessionPage() {
     if (session.status === 'completed') return;
     if (hasJoined.current) return;
     if (joinSessionMutation.isPending) return;
+
+    // If the backend or join endpoint reported the session as full, stop.
+    if (accessDenied) return;
+
     if (!isHost && !isParticipant) {
-        hasJoined.current = true;
-        joinSessionMutation.mutate(sessionId, { onSuccess: refetch });
+      hasJoined.current = true;
+      joinSessionMutation.mutate(sessionId, {
+        onSuccess: () => {
+          setAccessDenied(false);
+          refetch();
+        },
+        onError: (err) => {
+          const status = err?.response?.status;
+          const msg = err?.response?.data?.message || "";
+          if (status === 403 || msg.toLowerCase().includes("full")) {
+            setAccessDenied(true);
+          }
+        },
+      });
     }
-  }, [session, user, loadingSession, isHost, isParticipant, sessionId, refetch, joinSessionMutation]);
+  }, [session, user, loadingSession, isHost, isParticipant, sessionId, refetch, joinSessionMutation, accessDenied]);
 
   // --- RUN CODE LOGIC (With Test Cases) ---
   const handleRunCode = async () => {
@@ -144,6 +161,26 @@ function SessionPage() {
     }
   };
 
+  if (accessDenied) {
+    return (
+      <div className="h-screen bg-slate-950 flex flex-col items-center justify-center text-center px-4">
+        <AlertTriangle className="w-10 h-10 text-red-400 mb-4" />
+        <h1 className="text-2xl font-bold text-white mb-2">
+          Access Denied
+        </h1>
+        <p className="text-slate-400 mb-4 max-w-md">
+          This interview session already has two participants. Ask the host to create a new private room for you.
+        </p>
+        <Link
+          to="/dashboard"
+          className="text-blue-400 hover:underline text-sm font-medium"
+        >
+          Return to Dashboard
+        </Link>
+      </div>
+    );
+  }
+
   if (loadingSession || isInitializingCall) {
     return (
         <div className="h-screen bg-slate-950 flex flex-col items-center justify-center text-blue-500">
@@ -171,12 +208,29 @@ function SessionPage() {
                 <ChevronLeft size={20} />
             </Link>
             <div>
-                <h1 className="font-bold text-sm flex items-center gap-2">
-                    {session.sessionName || session.problem}
-                    <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-xs border border-blue-500/20">
-                        {session.difficulty || 'Medium'}
-                    </span>
-                </h1>
+              <h1 className="font-bold text-sm flex items-center gap-2">
+                {session.name || session.sessionName || session.problem}
+                <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-xs border border-blue-500/20">
+                  {session.difficulty || "Medium"}
+                </span>
+              </h1>
+              {isHost && (
+                <button
+                  onClick={async () => {
+                    const inviteUrl = `${window.location.origin}/session/${sessionId}`;
+                    try {
+                      await navigator.clipboard.writeText(inviteUrl);
+                      toast.success("Invite link copied to clipboard");
+                    } catch {
+                      toast.error("Failed to copy link");
+                    }
+                  }}
+                  className="mt-1 inline-flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 hover:underline"
+                >
+                  <Link2 size={12} />
+                  Copy Invite Link
+                </button>
+              )}
             </div>
          </div>
          {isHost && (
@@ -236,6 +290,7 @@ function SessionPage() {
                                     onCodeChange={setCode}
                                     onRunCode={handleRunCode}
                                     isRunning={isRunning}
+                                    sessionId={sessionId}
                                 />
                             </Panel>
                             <PanelResizeHandle className="w-1.5 bg-slate-900 hover:bg-blue-500/50 transition-colors" />

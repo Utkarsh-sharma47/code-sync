@@ -1,7 +1,14 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import { LANGUAGE_CONFIG } from '../data/problem';
 import { Play, Loader2, RotateCcw } from 'lucide-react';
+import { io } from 'socket.io-client';
+
+const SOCKET_EVENTS = {
+  JOIN_ROOM: "join-room",
+  CODE_CHANGE: "code-change",
+  CODE_UPDATE: "code-update",
+};
 
 const CodeEditorPanel = ({ 
   selectedLanguage, 
@@ -9,8 +16,65 @@ const CodeEditorPanel = ({
   code, 
   onCodeChange, 
   onRunCode, 
-  isRunning 
+  isRunning,
+  sessionId,
+  isReadOnly = false,
 }) => {
+  const socketRef = useRef(null);
+  const suppressNextLocalChange = useRef(false);
+
+  // Setup Socket.io for real-time code sync
+  useEffect(() => {
+    if (!sessionId || isReadOnly) return;
+
+    const socket = io(import.meta.env.VITE_API_URL, {
+      withCredentials: true,
+    });
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      console.log("[CodeSync] Socket connected:", socket.id);
+      socket.emit(SOCKET_EVENTS.JOIN_ROOM, sessionId);
+    });
+
+    socket.on(SOCKET_EVENTS.CODE_UPDATE, (incomingCode) => {
+      // Avoid echo loops: mark that the next local change came from remote
+      suppressNextLocalChange.current = true;
+      onCodeChange(incomingCode ?? "");
+    });
+
+    socket.on("disconnect", () => {
+      console.log("[CodeSync] Socket disconnected");
+    });
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, [sessionId, isReadOnly, onCodeChange]);
+
+  const handleCodeChange = (value) => {
+    const newValue = value ?? "";
+
+    // If this change came from a remote update we just applied, skip broadcasting
+    if (suppressNextLocalChange.current) {
+      suppressNextLocalChange.current = false;
+      onCodeChange(newValue);
+      return;
+    }
+
+    onCodeChange(newValue);
+
+    if (socketRef.current && sessionId && !isReadOnly) {
+      socketRef.current.emit(SOCKET_EVENTS.CODE_CHANGE, {
+        sessionId,
+        code: newValue,
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-[#1e1e1e] relative">
       {/* Toolbar */}
@@ -55,7 +119,7 @@ const CodeEditorPanel = ({
           theme="vs-dark"
           language={LANGUAGE_CONFIG[selectedLanguage]?.monacoLang || 'javascript'}
           value={code}
-          onChange={onCodeChange}
+          onChange={handleCodeChange}
           options={{
             minimap: { enabled: false },
             fontSize: 14,

@@ -19,6 +19,7 @@
     "express": "^5.1.0",
     "inngest": "^3.47.0",
     "mongoose": "^9.0.1",
+    "socket.io": "^4.8.1",
     "stream-chat": "^9.27.0"
   },
   "devDependencies": {
