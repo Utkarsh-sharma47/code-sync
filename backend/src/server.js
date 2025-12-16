@@ -1,4 +1,6 @@
 import express from "express";
+import http from "http";
+import { Server as SocketIOServer } from "socket.io";
 import path from "path";
 import { fileURLToPath } from "url";
 import { ENV } from "./lib/env.js";
@@ -11,12 +13,24 @@ import { clerkMiddleware } from "@clerk/express";
 import chatRoutes from "./routes/chatRoutes.js";
 import sessionRoutes from "./routes/sessionRoutes.js";
 
-
 const app = express();
+const httpServer = http.createServer(app);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const NODE_ENV = ENV.NODE_ENV || process.env.NODE_ENV || "production";
 const PORT = process.env.PORT || ENV.PORT || 5000;
+
+// Initialize Socket.io for real-time code sync
+const io = new SocketIOServer(httpServer, {
+  cors: {
+    origin: [
+      ENV.CLIENT_URL,
+      "https://code-sync-0xoi.onrender.com"
+    ],
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
 
 //middleware
 app.use(express.json());
@@ -33,6 +47,27 @@ app.use(clerkMiddleware());
 app.use("/api/inngest", serve({ client: inngest, functions }));
 app.use("/api/chat" ,chatRoutes);
 app.use("/api/sessions" ,sessionRoutes);
+
+// Socket.io events for collaborative code editing
+io.on("connection", (socket) => {
+  console.log("Socket connected:", socket.id);
+
+  socket.on("join-room", (sessionId) => {
+    if (!sessionId) return;
+    socket.join(sessionId);
+    console.log(`Socket ${socket.id} joined room ${sessionId}`);
+  });
+
+  socket.on("code-change", ({ sessionId, code }) => {
+    if (!sessionId) return;
+    // Broadcast to everyone else in the same room
+    socket.to(sessionId).emit("code-update", code);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Socket disconnected:", socket.id);
+  });
+});
 
 // API test
 app.get("/api/test", (req, res) => {
@@ -63,7 +98,7 @@ app.use((req, res) => {
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(PORT, () => {
+    httpServer.listen(PORT, () => {
       console.log(`Server running in ${NODE_ENV} mode on port ${PORT}`);
     });
   } catch (error) {

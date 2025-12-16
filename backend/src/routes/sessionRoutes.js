@@ -19,7 +19,9 @@ router.get("/my-recent", protectRoute, getRecentSessions);
 
 // get user the session by id
 router.get("/:id", protectRoute, getSessionById);
+// support both GET (legacy) and POST (current frontend) for joining
 router.get("/:id/join", protectRoute, joinSession);
+router.post("/:id/join", protectRoute, joinSession);
 router.post("/:id/end", protectRoute, endSession);
 router.post("/stream-token", protectRoute, getStreamToken);
 

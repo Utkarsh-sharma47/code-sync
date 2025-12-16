@@ -65,6 +65,7 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
       setChatClient(chatClientInstance);
 
       // 5. Watch Channel
+      console.log("Joining Chat Channel:", session.callId, "as user:", userId);
       const chatChannel = chatClientInstance.channel("messaging", session.callId);
       try {
         await chatChannel.watch();

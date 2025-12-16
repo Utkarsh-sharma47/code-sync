@@ -29,6 +29,7 @@
     "react-router": "^7.10.1",
     "react-router-dom": "^7.10.1",
     "root": "github:tanstack/react-query",
+    "socket.io-client": "^4.8.1",
     "stream-chat": "^9.27.1",
     "stream-chat-react": "^13.13.0",
     "tailwindcss": "^4.1.18",

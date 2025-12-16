@@ -116,7 +116,7 @@ const DashboardPage = () => {
                     // --- SMART TITLE RESOLUTION ---
                     const problemDetails = PROBLEMS[session.problemId] || {};
                     // Check custom name -> Check DB title -> Check Local Data -> Default
-                    const displayTitle = session.sessionName || session.problem || problemDetails.title || "Unknown Session";
+                    const displayTitle = session.name || session.sessionName || session.problem || problemDetails.title || "Unknown Session";
                     const displayDiff = session.difficulty || problemDetails.difficulty || "Medium";
                     
                     const participantCount = 1 + (session.participant ? 1 : 0);
@@ -162,7 +162,7 @@ const DashboardPage = () => {
                 recentSessions.map((session) => {
                   // --- SMART TITLE RESOLUTION FOR HISTORY ---
                   const problemDetails = PROBLEMS[session.problemId] || {};
-                  const displayTitle = session.sessionName || session.problem || problemDetails.title || "Unknown Session";
+                  const displayTitle = session.name || session.sessionName || session.problem || problemDetails.title || "Unknown Session";
 
                   return (
                     <motion.div key={session._id} variants={itemVariants} className="bg-slate-900/40 border border-white/5 p-5 rounded-2xl hover:bg-slate-900/60 transition-all">
