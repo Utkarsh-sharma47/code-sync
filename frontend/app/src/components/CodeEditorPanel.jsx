@@ -21,47 +21,75 @@ const CodeEditorPanel = ({
   isReadOnly = false,
 }) => {
   const socketRef = useRef(null);
-  const suppressNextLocalChange = useRef(false);
+  const isRemoteUpdate = useRef(false);
+  const currentCodeRef = useRef(code);
+
+  useEffect(() => {
+    currentCodeRef.current = code;
+  }, [code]);
 
   // Setup Socket.io for real-time code sync
   useEffect(() => {
     if (!sessionId || isReadOnly) return;
 
-    const socket = io(import.meta.env.VITE_API_URL, {
+    const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+    const socketUrl = apiUrl.replace(/\/api\/?$/, "");
+    console.log("[CodeSync] socket target:", socketUrl);
+    const socket = io(socketUrl, {
       withCredentials: true,
     });
     socketRef.current = socket;
 
     socket.on("connect", () => {
-      console.log("[CodeSync] Socket connected:", socket.id);
-      socket.emit(SOCKET_EVENTS.JOIN_ROOM, sessionId);
+      console.log("[CodeSync] connect:", socket.id);
+      socket.emit(SOCKET_EVENTS.JOIN_ROOM, { roomId: sessionId, userId: "client" });
+      console.log("[CodeSync] emit join-room:", { roomId: sessionId });
     });
 
-    socket.on(SOCKET_EVENTS.CODE_UPDATE, (incomingCode) => {
-      onCodeChange(incomingCode ?? "");
-    });
+    const handleCodeUpdate = (incomingCode) => {
+      const next = incomingCode ?? "";
+      console.log("[CodeSync] recv code-update:", { length: next.length });
+      // Prevent echo loop: only update when content differs, and mark as remote
+      if (next !== currentCodeRef.current) {
+        isRemoteUpdate.current = true;
+        onCodeChange(next);
+      }
+    };
+    socket.on(SOCKET_EVENTS.CODE_UPDATE, handleCodeUpdate);
 
     socket.on("disconnect", () => {
-      console.log("[CodeSync] Socket disconnected");
+      console.log("[CodeSync] disconnect");
     });
 
     return () => {
       if (socketRef.current) {
+        socketRef.current.off(SOCKET_EVENTS.CODE_UPDATE, handleCodeUpdate);
+        socketRef.current.off("connect");
+        socketRef.current.off("disconnect");
         socketRef.current.disconnect();
         socketRef.current = null;
       }
     };
-  }, [sessionId, isReadOnly, onCodeChange]);
+  }, [sessionId, isReadOnly]);
 
   const handleCodeChange = (value) => {
     const newValue = value ?? "";
+    // If this change came from a remote update we just applied, do not emit back
+    if (isRemoteUpdate.current) {
+      isRemoteUpdate.current = false;
+      console.log("[CodeSync] skip emit (remote update applied)");
+      onCodeChange(newValue); // still update local state in case Monaco fires onChange after set
+      return;
+    }
     onCodeChange(newValue);
 
     if (socketRef.current && sessionId && !isReadOnly) {
-      socketRef.current.emit(SOCKET_EVENTS.CODE_CHANGE, {
+      const payload = {
         sessionId,
         code: newValue,
-      });
+      };
+      console.log("[CodeSync] emit code-change:", { length: newValue.length });
+      socketRef.current.emit(SOCKET_EVENTS.CODE_CHANGE, payload);
     }
   };
 

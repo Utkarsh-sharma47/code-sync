@@ -162,6 +162,9 @@ function SessionPage() {
   };
 
   const [isChatOpen, setIsChatOpen] = useState(false); // State for chat toggle
+  useEffect(() => {
+    console.log("Session Data:", session);
+  }, [session]);
 
   if (accessDenied) {
     return (
@@ -271,7 +274,34 @@ function SessionPage() {
             <PanelGroup direction="horizontal">
                 <Panel defaultSize={50} minSize={30}>
                     <PanelGroup direction="vertical">
-                         <Panel defaultSize={70} minSize={30} className="flex flex-col">
+                         <Panel defaultSize={35} minSize={20} className="bg-slate-900/50 backdrop-blur-sm border-b border-white/10">
+                            <div className="h-full overflow-y-auto custom-scrollbar p-6">
+                                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                    <Cpu size={20} className="text-blue-400"/> Description
+                                </h2>
+                                <div className="prose prose-invert max-w-none text-sm text-slate-300">
+                                    <p>{problemData?.description?.text || "No description available."}</p>
+                                    
+                                    {Array.isArray(problemData?.examples) && problemData.examples.length > 0 && (
+                                        <div className="mt-6 space-y-4">
+                                            <h3 className="font-bold text-white">Examples</h3>
+                                            {problemData.examples.map((ex, i) => (
+                                                <div key={i} className="bg-slate-950 rounded-lg p-3 border border-white/5">
+                                                    <div className="text-xs font-bold text-slate-500 mb-1">Example {i+1}</div>
+                                                    <div className="font-mono text-xs">
+                                                        <div className="flex gap-2"><span className="text-slate-500 w-12">Input:</span> <span>{ex.input}</span></div>
+                                                        <div className="flex gap-2"><span className="text-slate-500 w-12">Output:</span> <span className="text-emerald-400">{ex.output}</span></div>
+                                                        {ex.explanation && <div className="mt-1 text-slate-500">{ex.explanation}</div>}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                         </Panel>
+                         <PanelResizeHandle className="h-1 bg-slate-800 hover:bg-blue-500 transition-colors cursor-row-resize z-50" />
+                         <Panel defaultSize={45} minSize={25} className="flex flex-col">
                             <CodeEditorPanel 
                                 selectedLanguage={selectedLanguage}
                                 onLanguageChange={(e) => setSelectedLanguage(e.target.value)}
@@ -284,7 +314,7 @@ function SessionPage() {
                             />
                          </Panel>
                          <PanelResizeHandle className="h-1 bg-slate-800 hover:bg-blue-500 transition-colors cursor-row-resize z-50" />
-                         <Panel defaultSize={30} minSize={10}>
+                         <Panel defaultSize={20} minSize={10}>
                             <OutputPanel output={output} testResults={testResults} />
                          </Panel>
                     </PanelGroup>
