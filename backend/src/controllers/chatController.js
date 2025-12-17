@@ -23,9 +23,11 @@ export async function getStreamToken(req, res) {
         // 3. Compute display name and image with safe fallbacks
         const userName =
             [user.firstName, user.lastName].filter(Boolean).join(" ").trim() ||
+            user.name ||
             user.username ||
+            user.email ||
             "Unknown";
-        const userImage = user.image || user.imageUrl || "";
+        const userImage = user.profileImage || user.image || user.imageUrl || "";
 
         // 4. Return everything the Frontend needs
         return res.status(200).json({ 

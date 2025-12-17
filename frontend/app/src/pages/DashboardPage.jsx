@@ -20,6 +20,7 @@ const DashboardPage = () => {
   // 1. Fetch Data
   const { data: activeSessionsData, isLoading: loadingActive, isError: activeError } = useActiveSessions();
   const { data: recentSessionsData, isLoading: loadingRecent } = useMyRecentSessions();
+  const endSessionMutation = useEndSession();
 
   // 2. SAFETY CHECK: Convert to array or empty list to prevent .map() crashes
   const activeSessions = Array.isArray(activeSessionsData) ? activeSessionsData : [];
@@ -143,7 +144,7 @@ const DashboardPage = () => {
                         <div className="flex items-center gap-2">
                             {isHost && (
                                 <button 
-                                    onClick={() => endSession(session._id)} 
+                                    onClick={() => endSessionMutation.mutate(session._id)} 
                                     className="p-2 rounded-full bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-colors"
                                     title="End Session"
                                 >
