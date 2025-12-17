@@ -25,7 +25,8 @@ const io = new SocketIOServer(httpServer, {
   cors: {
     origin: [
       ENV.CLIENT_URL,
-      "https://code-sync-0xoi.onrender.com"
+      "https://code-sync-0xoi.onrender.com",
+      "http://localhost:5173"
     ],
     methods: ["GET", "POST"],
     credentials: true,
@@ -37,7 +38,8 @@ app.use(express.json());
 app.use(cors({ 
   origin: [
     ENV.CLIENT_URL,                    // Your local or env-defined URL
-    "https://code-sync-0xoi.onrender.com" // Your deployed frontend
+    "https://code-sync-0xoi.onrender.com", // Your deployed frontend
+    "http://localhost:5173"
   ], 
   credentials: true 
 }));

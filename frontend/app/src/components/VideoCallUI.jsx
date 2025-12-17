@@ -24,14 +24,12 @@ import {
   Users,
 } from "lucide-react";
 
-const VideoCallUI = ({ chatClient, channel }) => {
+const VideoCallUI = ({ chatClient, channel, isChatOpen, setIsChatOpen }) => {
   const { useCallCallingState, useParticipantCount } = useCallStateHooks();
   const callingState = useCallCallingState();
   const participantCount = useParticipantCount();
 
-  const [activeTab, setActiveTab] = useState("video"); // 'video' | 'chat'
   const [layout, setLayout] = useState("grid");
-  const chatOpen = activeTab === "chat";
 
   // --- Helpers for Custom Controls ---
   const call = useCall();
@@ -61,13 +59,10 @@ const VideoCallUI = ({ chatClient, channel }) => {
   }
 
   return (
-    <div className="relative flex w-full h-full bg-slate-950 overflow-hidden">
-      {/* LEFT: Video Area (Flexible Width) */}
-      <div
-        className={`relative flex flex-col transition-all duration-300 ease-in-out ${
-          chatOpen ? "w-full lg:w-2/3 xl:w-3/4" : "w-full"
-        }`}
-      >
+    <div className="relative flex w-full h-full bg-slate-950 overflow-hidden flex-col">
+      {/* VIDEO AREA */}
+      <div className={`relative flex-1 bg-black overflow-hidden transition-all duration-300 ${isChatOpen ? 'h-[50%]' : 'h-full'}`}>
+        
         {/* Top Info Bar */}
         <div className="absolute top-4 left-4 z-20 flex items-center gap-3">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900/60 backdrop-blur-md rounded-full border border-white/5 text-xs font-medium text-slate-300">
@@ -77,9 +72,9 @@ const VideoCallUI = ({ chatClient, channel }) => {
         </div>
 
         {/* Stream Layout */}
-        <div className="flex-1 bg-black relative rounded-none lg:rounded-r-2xl overflow-hidden">
+        <div className="w-full h-full">
           {layout === "grid" ? <PaginatedGridLayout /> : <SpeakerLayout />}
-
+          
           {/* Connection Quality Indicator Override */}
           <style>
             {`
@@ -96,9 +91,9 @@ const VideoCallUI = ({ chatClient, channel }) => {
           </style>
         </div>
 
-        {/* BOTTOM: Floating Custom Controls */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 w-full max-w-fit">
-          <div className="flex items-center gap-3 px-6 py-3 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl transition-all hover:bg-slate-900/90 hover:border-white/20 hover:scale-105">
+        {/* FLOATING CONTROLS (Only visible when chat is closed or adjusted when open) */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 w-full max-w-fit">
+          <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl transition-all hover:bg-slate-900/90">
             {/* Mic Toggle */}
             <button
               onClick={toggleMic}
@@ -123,7 +118,7 @@ const VideoCallUI = ({ chatClient, channel }) => {
               {isCamMuted ? <VideoOff size={20} /> : <Video size={20} />}
             </button>
 
-            <div className="w-px h-8 bg-white/10 mx-2" />
+            <div className="w-px h-8 bg-white/10 mx-1 sm:mx-2" />
 
             {/* Layout Switch */}
             <button
@@ -136,21 +131,17 @@ const VideoCallUI = ({ chatClient, channel }) => {
 
             {/* Chat Toggle */}
             <button
-              onClick={() => setActiveTab(chatOpen ? "video" : "chat")}
+              onClick={() => setIsChatOpen(!isChatOpen)}
               className={`p-3 rounded-xl transition-all relative ${
-                chatOpen
+                isChatOpen
                   ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20"
                   : "bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white"
               }`}
             >
               <MessageSquare size={20} />
-              {/* Notification Dot (Mock) */}
-              {!chatOpen && (
-                <span className="absolute top-2 right-2 w-2 h-2 bg-blue-400 rounded-full border-2 border-slate-900" />
-              )}
             </button>
 
-            <div className="w-px h-8 bg-white/10 mx-2" />
+            <div className="w-px h-8 bg-white/10 mx-1 sm:mx-2" />
 
             {/* Leave Call */}
             <button
@@ -163,30 +154,20 @@ const VideoCallUI = ({ chatClient, channel }) => {
         </div>
       </div>
 
-      {/* RIGHT: Chat Sidebar (Sliding Panel) */}
-      <div
-        className={`relative z-10 flex flex-col h-full min-h-0 bg-slate-950 border-l border-white/10 transition-all duration-300 ease-in-out ${
-          chatOpen ? "w-full lg:w-1/3 xl:w-1/4 translate-x-0" : "w-0 translate-x-full hidden"
-        }`}
-      >
-        {chatClient && channel && (
-          <div className="flex flex-col flex-1 min-h-0">
+      {/* CHAT AREA (Split Vertical) */}
+      {isChatOpen && chatClient && channel && (
+        <div className="h-[50%] flex flex-col bg-slate-950 border-t border-white/10 min-h-0">
             <Chat client={chatClient} theme="str-chat__theme-dark">
               <Channel channel={channel}>
                 <Window>
                   {/* Chat Header */}
-                  <div className="h-14 flex items-center justify-between px-4 border-b border-white/10 bg-slate-950">
+                  <div className="h-10 flex items-center justify-between px-4 border-b border-white/10 bg-slate-950">
                     <div className="flex items-center gap-2">
-                      <MessageSquare size={16} className="text-blue-400" />
-                      <span className="text-sm font-bold text-white tracking-wide">
-                        LIVE CHAT
-                      </span>
+                      <MessageSquare size={14} className="text-blue-400" />
+                      <span className="text-xs font-bold text-white tracking-wide">LIVE CHAT</span>
                     </div>
-                    <button
-                      onClick={() => setActiveTab("video")}
-                      className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
-                    >
-                      <Maximize2 size={16} />
+                    <button onClick={() => setIsChatOpen(false)} className="p-1 hover:bg-white/10 rounded">
+                        <Maximize2 size={14} className="text-slate-400"/>
                     </button>
                   </div>
 
@@ -202,9 +183,8 @@ const VideoCallUI = ({ chatClient, channel }) => {
                 </Window>
               </Channel>
             </Chat>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

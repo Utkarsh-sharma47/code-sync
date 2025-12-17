@@ -161,6 +161,8 @@ function SessionPage() {
     }
   };
 
+  const [isChatOpen, setIsChatOpen] = useState(false); // State for chat toggle
+
   if (accessDenied) {
     return (
       <div className="h-screen bg-slate-950 flex flex-col items-center justify-center text-center px-4">
@@ -199,159 +201,133 @@ function SessionPage() {
       );
   }
 
+  // --- LAYOUT RENDERING ---
   return (
-    <div className="h-screen flex flex-col bg-slate-950 text-white font-sans overflow-hidden">
-      {/* Navbar */}
-      <div className="h-14 bg-slate-900 border-b border-white/10 flex items-center justify-between px-4 z-50">
-         <div className="flex items-center gap-4">
-            <Link to="/dashboard" className="p-2 hover:bg-white/5 rounded-lg text-slate-400 transition-colors">
-                <ChevronLeft size={20} />
-            </Link>
-            <div>
-              <h1 className="font-bold text-sm flex items-center gap-2">
-                {session.name || session.sessionName || session.problem}
-                <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-xs border border-blue-500/20">
-                  {session.difficulty || "Medium"}
-                </span>
-              </h1>
-              {isHost && (
-                <button
-                  onClick={async () => {
-                    const inviteUrl = `${window.location.origin}/session/${sessionId}`;
-                    try {
-                      await navigator.clipboard.writeText(inviteUrl);
-                      toast.success("Invite link copied to clipboard");
-                    } catch {
-                      toast.error("Failed to copy link");
-                    }
-                  }}
-                  className="mt-1 inline-flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 hover:underline"
-                >
-                  <Link2 size={12} />
-                  Copy Invite Link
-                </button>
-              )}
+    <div className="h-screen flex flex-col bg-slate-950 text-white overflow-hidden font-sans">
+        {/* Top Navigation Bar */}
+        <div className="h-14 bg-slate-900 border-b border-white/5 flex items-center justify-between px-4 shrink-0 z-20">
+            <div className="flex items-center gap-4">
+                <Link to="/dashboard" className="p-2 hover:bg-white/10 rounded-lg transition-colors text-slate-400 hover:text-white">
+                    <ChevronLeft size={20} />
+                </Link>
+                <div className="flex flex-col">
+                    <h1 className="font-bold text-sm text-white flex items-center gap-2">
+                        {problemData.title}
+                        <span className="px-2 py-0.5 rounded text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/20 uppercase tracking-wider">
+                            {problemData.difficulty}
+                        </span>
+                    </h1>
+                    <span className="text-xs text-slate-500 flex items-center gap-1">
+                        <Cpu size={10} /> Session ID: {sessionId?.slice(0, 8)}...
+                    </span>
+                </div>
             </div>
-         </div>
-         {isHost && (
-             <button 
-                onClick={() => { if(confirm("End this session?")) endSessionMutation.mutate(sessionId, { onSuccess: () => navigate('/dashboard')}); }}
-                className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold px-4 py-2 rounded-lg border border-red-500/20 transition-all"
-             >
-                <LogOut size={14} /> End
-             </button>
-         )}
-      </div>
 
-      <div className="flex-1 overflow-hidden relative">
-        <PanelGroup direction="horizontal">
+            <div className="flex items-center gap-3">
+                 {/* COPY LINK BUTTON */}
+                 <button 
+                    onClick={async () => {
+                        const inviteUrl = `${window.location.origin}/session/${sessionId}`;
+                        try {
+                          await navigator.clipboard.writeText(inviteUrl);
+                          toast.success("Link copied to clipboard!");
+                        } catch {
+                          toast.error("Failed to copy link");
+                        }
+                    }}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg border border-white/5 transition-all active:scale-95"
+                 >
+                    <Link2 size={14} />
+                    <span>Copy Link</span>
+                 </button>
+
+                 {/* END SESSION BUTTON */}
+                 {isHost && (
+                    <button 
+                        onClick={() => {
+                            if (window.confirm("Are you sure you want to end this session?")) {
+                                endSessionMutation.mutate(sessionId, {
+                                    onSuccess: () => navigate("/dashboard")
+                                });
+                            }
+                        }}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold rounded-lg border border-red-500/20 transition-all"
+                    >
+                        <LogOut size={14} />
+                        <span>End Session</span>
+                    </button>
+                 )}
+                 
+                 <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-sm font-bold shadow-lg shadow-blue-500/20">
+                    {user?.firstName?.charAt(0) || "U"}
+                 </div>
+            </div>
+        </div>
+
+        {/* MAIN CONTENT AREA: SPLIT LAYOUT */}
+        <div className="flex-1 flex overflow-hidden relative">
             
-            {/* LEFT: Problem & Code */}
-            <Panel defaultSize={55} minSize={30} className="flex flex-col">
-                <PanelGroup direction="vertical">
-                    
-                    {/* Description Panel */}
-                    <Panel defaultSize={40} minSize={20} className="bg-slate-900/50 backdrop-blur-sm border-r border-b border-white/10">
-                        <div className="h-full overflow-y-auto custom-scrollbar p-6">
-                            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                <Cpu size={20} className="text-blue-400"/> Description
-                            </h2>
-                            <div className="prose prose-invert max-w-none text-sm text-slate-300">
-                                <p>{problemData?.description?.text}</p>
-                                
-                                {problemData?.examples && (
-                                    <div className="mt-6 space-y-4">
-                                        <h3 className="font-bold text-white">Examples</h3>
-                                        {problemData.examples.map((ex, i) => (
-                                            <div key={i} className="bg-slate-950 rounded-lg p-3 border border-white/5">
-                                                <div className="text-xs font-bold text-slate-500 mb-1">Example {i+1}</div>
-                                                <div className="font-mono text-xs">
-                                                    <div className="flex gap-2"><span className="text-slate-500 w-12">Input:</span> <span>{ex.input}</span></div>
-                                                    <div className="flex gap-2"><span className="text-slate-500 w-12">Output:</span> <span className="text-emerald-400">{ex.output}</span></div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+            {/* LEFT PANEL: CODE EDITOR & OUTPUT (Always 50% or Resizable) */}
+            <PanelGroup direction="horizontal">
+                <Panel defaultSize={50} minSize={30}>
+                    <PanelGroup direction="vertical">
+                         <Panel defaultSize={70} minSize={30} className="flex flex-col">
+                            <CodeEditorPanel 
+                                selectedLanguage={selectedLanguage}
+                                onLanguageChange={(e) => setSelectedLanguage(e.target.value)}
+                                code={code}
+                                onCodeChange={setCode}
+                                onRunCode={handleRunCode}
+                                isRunning={isRunning}
+                                sessionId={sessionId}
+                                isReadOnly={false}
+                            />
+                         </Panel>
+                         <PanelResizeHandle className="h-1 bg-slate-800 hover:bg-blue-500 transition-colors cursor-row-resize z-50" />
+                         <Panel defaultSize={30} minSize={10}>
+                            <OutputPanel output={output} testResults={testResults} />
+                         </Panel>
+                    </PanelGroup>
+                </Panel>
+                
+                <PanelResizeHandle className="w-1 bg-slate-800 hover:bg-blue-500 transition-colors cursor-col-resize z-50" />
+
+                {/* RIGHT PANEL: VIDEO + CHAT */}
+                <Panel defaultSize={50} minSize={30}>
+                    <div className="h-full bg-black relative">
+                         {isInitializingCall ? (
+                            <div className="h-full flex flex-col items-center justify-center text-blue-500">
+                                <Loader2 className="w-8 h-8 animate-spin mb-3" />
+                                <p className="text-sm font-medium animate-pulse">Connecting to Secure Room...</p>
                             </div>
-                        </div>
-                    </Panel>
-
-                    <PanelResizeHandle className="h-1.5 bg-slate-900 hover:bg-blue-500/50 transition-colors" />
-
-                    {/* Editor & Output */}
-                    <Panel defaultSize={60} minSize={30}>
-                        <PanelGroup direction="horizontal">
-                            <Panel defaultSize={60} minSize={30} className="border-r border-white/10">
-                                <CodeEditorPanel 
-                                    selectedLanguage={selectedLanguage}
-                                    onLanguageChange={(e) => setSelectedLanguage(e.target.value)}
-                                    code={code}
-                                    onCodeChange={setCode}
-                                    onRunCode={handleRunCode}
-                                    isRunning={isRunning}
-                                    sessionId={sessionId}
-                                />
-                            </Panel>
-                            <PanelResizeHandle className="w-1.5 bg-slate-900 hover:bg-blue-500/50 transition-colors" />
-                            <Panel defaultSize={40} minSize={20}>
-                                <OutputPanel output={output} testResults={testResults} />
-                            </Panel>
-                        </PanelGroup>
-                    </Panel>
-                </PanelGroup>
-            </Panel>
-
-            <PanelResizeHandle className="w-1.5 bg-slate-900 hover:bg-blue-500/50 transition-colors z-50" />
-
-            {/* RIGHT: Video & Chat */}
-            <Panel defaultSize={45} minSize={25} className="bg-black relative">
-                
-                {/* 1. INITIALIZING STATE */}
-                {isInitializingCall ? (
-                    <div className="h-full flex flex-col items-center justify-center text-blue-500">
-                        <Loader2 className="w-8 h-8 animate-spin mb-3" />
-                        <p className="text-sm font-medium animate-pulse">Connecting to Secure Room...</p>
+                         ) : streamClient && call ? (
+                            <StreamVideo client={streamClient}>
+                                <StreamCall call={call}>
+                                    <VideoCallUI 
+                                        chatClient={chatClient} 
+                                        channel={channel} 
+                                        isChatOpen={isChatOpen}
+                                        setIsChatOpen={setIsChatOpen}
+                                    />
+                                </StreamCall>
+                            </StreamVideo>
+                         ) : connectionError ? (
+                            <div className="h-full flex flex-col items-center justify-center text-red-400 p-6 text-center">
+                                <AlertTriangle className="w-8 h-8 mb-4" />
+                                <h3 className="text-lg font-bold text-white mb-2">Connection Failed</h3>
+                                <p className="text-sm opacity-80 mb-6">{connectionError}</p>
+                                <button onClick={retryConnection} className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold text-sm">Retry</button>
+                            </div>
+                         ) : (
+                            <div className="h-full flex flex-col items-center justify-center text-slate-500">
+                                <Loader2 className="w-8 h-8 animate-spin mb-2 opacity-50" />
+                                <p>Waiting for connection...</p>
+                            </div>
+                         )}
                     </div>
-                ) 
-                
-                /* 2. SUCCESS STATE */
-                : streamClient && call ? (
-                    <StreamVideo client={streamClient}>
-                        <StreamCall call={call}>
-                            <VideoCallUI chatClient={chatClient} channel={channel} />
-                        </StreamCall>
-                    </StreamVideo>
-                ) 
-                
-                /* 3. ERROR STATE */
-                : connectionError ? (
-                    <div className="h-full flex flex-col items-center justify-center text-red-400 p-6 text-center">
-                        <div className="bg-red-500/10 p-4 rounded-full mb-4">
-                            <AlertTriangle className="w-8 h-8" />
-                        </div>
-                        <h3 className="text-lg font-bold text-white mb-2">Connection Failed</h3>
-                        <p className="text-sm opacity-80 mb-6">{connectionError}</p>
-                        <button 
-                            onClick={retryConnection} 
-                            className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold text-sm transition-colors"
-                        >
-                            Retry Connection
-                        </button>
-                    </div>
-                )
-
-                /* 4. FALLBACK STATE */
-                : (
-                    <div className="h-full flex flex-col items-center justify-center text-slate-500">
-                        <Loader2 className="w-8 h-8 animate-spin mb-2 opacity-50" />
-                        <p>Waiting for connection...</p>
-                    </div>
-                )}
-            </Panel>
-
-        </PanelGroup>
-      </div>
+                </Panel>
+            </PanelGroup>
+        </div>
     </div>
   );
 }
