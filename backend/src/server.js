@@ -54,15 +54,17 @@ app.use("/api/sessions" ,sessionRoutes);
 io.on("connection", (socket) => {
   console.log("Socket connected:", socket.id);
 
-  socket.on("join-room", (sessionId) => {
-    if (!sessionId) return;
-    socket.join(sessionId);
-    console.log(`Socket ${socket.id} joined room ${sessionId}`);
+  socket.on("join-room", (payload) => {
+    const roomId = typeof payload === "string" ? payload : payload?.roomId;
+    const userId = typeof payload === "object" ? payload?.userId : undefined;
+    if (!roomId) return;
+    socket.join(roomId);
+    console.log(`User ${userId || socket.id} joined room ${roomId}`);
   });
 
   socket.on("code-change", ({ sessionId, code }) => {
     if (!sessionId) return;
-    // Broadcast to everyone else in the same room
+    console.log(`code-change from ${socket.id} to room ${sessionId} (${(code || "").length} chars)`);
     socket.to(sessionId).emit("code-update", code);
   });
 
