@@ -38,8 +38,6 @@ const CodeEditorPanel = ({
     });
 
     socket.on(SOCKET_EVENTS.CODE_UPDATE, (incomingCode) => {
-      // Avoid echo loops: mark that the next local change came from remote
-      suppressNextLocalChange.current = true;
       onCodeChange(incomingCode ?? "");
     });
 
@@ -57,14 +55,6 @@ const CodeEditorPanel = ({
 
   const handleCodeChange = (value) => {
     const newValue = value ?? "";
-
-    // If this change came from a remote update we just applied, skip broadcasting
-    if (suppressNextLocalChange.current) {
-      suppressNextLocalChange.current = false;
-      onCodeChange(newValue);
-      return;
-    }
-
     onCodeChange(newValue);
 
     if (socketRef.current && sessionId && !isReadOnly) {

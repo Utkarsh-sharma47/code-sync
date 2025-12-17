@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useUser } from '@clerk/clerk-react';
 import { 
-  Plus, Users, Clock, Zap, Code2, Trophy, Calendar, AlertTriangle
+  Plus, Users, Clock, Zap, Code2, Trophy, Calendar, AlertTriangle, Trash2
 } from 'lucide-react';
 
 // Ensure this matches your actual filename (plural 'useSessions')
-import { useActiveSessions, useMyRecentSessions } from '../hooks/useSessions';
+import { useActiveSessions, useMyRecentSessions, useEndSession } from '../hooks/useSessions';
 import { PROBLEMS } from '../data/problem';
 import Navbar from '../components/Navbar';
 import CreateSessionModal from '../components/CreateSessionModal';
@@ -121,6 +121,7 @@ const DashboardPage = () => {
                     
                     const participantCount = 1 + (session.participant ? 1 : 0);
                     const isFull = participantCount >= 2;
+                    const isHost = session.host?.clerkId === user?.id;
 
                     return (
                       <div key={session._id} className="bg-slate-950 border border-white/5 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -139,11 +140,22 @@ const DashboardPage = () => {
                             </div>
                           </div>
                         </div>
-                        {!isFull ? (
-                           <button onClick={() => navigate(`/session/${session._id}`)} className="px-6 py-2 rounded-full bg-green-500 text-slate-900 font-bold hover:bg-green-400 transition-colors">Join</button>
-                        ) : (
-                           <button disabled className="px-6 py-2 rounded-full bg-slate-800 text-slate-500 font-bold cursor-not-allowed">Full</button>
-                        )}
+                        <div className="flex items-center gap-2">
+                            {isHost && (
+                                <button 
+                                    onClick={() => endSession(session._id)} 
+                                    className="p-2 rounded-full bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-colors"
+                                    title="End Session"
+                                >
+                                    <Trash2 size={20} />
+                                </button>
+                            )}
+                            {!isFull || isHost ? (
+                               <button onClick={() => navigate(`/session/${session._id}`)} className="px-6 py-2 rounded-full bg-green-500 text-slate-900 font-bold hover:bg-green-400 transition-colors">Join</button>
+                            ) : (
+                               <button disabled className="px-6 py-2 rounded-full bg-slate-800 text-slate-500 font-bold cursor-not-allowed">Full</button>
+                            )}
+                        </div>
                       </div>
                     )
                   })

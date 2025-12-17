@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { sessionApi } from "../api/sessions";
 
@@ -46,9 +46,14 @@ export const useJoinSession = () => {
 };
 
 export const useEndSession = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: sessionApi.endSession,
-    onSuccess: () => toast.success("Session ended successfully!"),
+    onSuccess: () => {
+      toast.success("Session ended successfully!");
+      queryClient.invalidateQueries(["activeSessions"]);
+      queryClient.invalidateQueries(["myRecentSessions"]);
+    },
     onError: (error) => toast.error(error.response?.data?.message || "Failed to end session"),
   });
 };

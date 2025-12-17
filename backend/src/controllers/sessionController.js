@@ -128,8 +128,8 @@ export async function getSessionById(req, res) {
         // - Existing participant allowed
         // - If seat free, allow (client will call join endpoint to claim)
         // - Otherwise, deny
-        const isHost = session.host?.toString() === userId.toString();
-        const isParticipant = session.participant && session.participant.toString() === userId.toString();
+        const isHost = session.host?._id?.toString() === userId.toString();
+        const isParticipant = session.participant?._id?.toString() === userId.toString();
 
         if (!isHost && !isParticipant && session.participant) {
             return res.status(403).json({ message: "Session is full" });
