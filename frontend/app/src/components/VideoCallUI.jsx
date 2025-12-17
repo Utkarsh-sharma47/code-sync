@@ -25,9 +25,10 @@ import {
 } from "lucide-react";
 
 const VideoCallUI = ({ chatClient, channel, isChatOpen, setIsChatOpen }) => {
-  const { useCallCallingState, useParticipantCount } = useCallStateHooks();
+  const { useCallCallingState, useParticipantCount, useParticipants } = useCallStateHooks();
   const callingState = useCallCallingState();
   const participantCount = useParticipantCount();
+  const participants = useParticipants ? useParticipants() : [];
 
   const [layout, setLayout] = useState("grid");
 
@@ -70,25 +71,35 @@ const VideoCallUI = ({ chatClient, channel, isChatOpen, setIsChatOpen }) => {
             <span>{participantCount} Online</span>
           </div>
         </div>
+        {/* Names Overlay */}
+        {Array.isArray(participants) && participants.length > 0 && (
+          <div className="absolute top-4 right-4 z-20 flex flex-wrap items-center gap-2 max-w-[40%] justify-end">
+            {participants.map((p) => (
+              <span key={p.sessionId || p.userId || p.id} className="px-2 py-1 rounded-full bg-slate-900/60 backdrop-blur-md border border-white/5 text-[11px] text-slate-200">
+                {p.name || p.userId || "User"}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Stream Layout */}
         <div className="w-full h-full">
           {layout === "grid" ? <PaginatedGridLayout /> : <SpeakerLayout />}
           
           {/* Connection Quality Indicator Override */}
-          <style>
+          {/* <style>
             {`
               .str-video__connection-quality-indicator {
-                top: 1rem !important;
+                bottom: 6.5rem !important;
                 right: 1rem !important;
                 background: rgba(15, 23, 42, 0.8) !important;
                 border: 1px solid rgba(255, 255, 255, 0.1) !important;
                 border-radius: 9999px !important;
                 padding: 4px 12px !important;
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0) !important;
               }
             `}
-          </style>
+          </style> */}
         </div>
 
         {/* FLOATING CONTROLS (Only visible when chat is closed or adjusted when open) */}

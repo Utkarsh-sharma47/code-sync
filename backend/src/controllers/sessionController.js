@@ -146,7 +146,7 @@ export async function joinSession(req, res) {
         const { id } = req.params;
         const userId = req.user?._id;
         const clerkId = req.user.clerkId;
-        const fullName = `${req.user.firstName} ${req.user.lastName}`;
+        const fullName = [req.user.firstName, req.user.lastName].filter(Boolean).join(" ").trim() || req.user.name || "";
         
         if (!userId) {
             return res.status(400).json({ message: "User missing on request" });
@@ -212,8 +212,8 @@ export async function joinSession(req, res) {
             // Upsert participant user in Stream Chat
             await chatClient.upsertUser({
                 id: clerkId,
-                name: fullName || user.username || "Unknown",
-                image: req.user.image || user.image || user.imageUrl || "",
+                name: fullName || user.name || user.username || "Unknown",
+                image: req.user.profileImage || req.user.image || user.image || user.imageUrl || "",
                 role: "user",
             });
 

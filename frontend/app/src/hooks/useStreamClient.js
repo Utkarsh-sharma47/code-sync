@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { StreamChat } from "stream-chat";
+import { useUser } from "@clerk/clerk-react";
 import toast from "react-hot-toast";
 import { initializeStreamClient, disconnectStreamClient } from "../lib/stream";
 import { sessionApi } from "../api/sessions";
 
 function useStreamClient(session, loadingSession, isHost, isParticipant) {
+  const { user: clerkUser } = useUser();
   const [streamClient, setStreamClient] = useState(null);
   const [call, setCall] = useState(null);
   const [chatClient, setChatClient] = useState(null);
@@ -39,26 +41,35 @@ function useStreamClient(session, loadingSession, isHost, isParticipant) {
       const { token, userId, userName, userImage } = tokenPayload || {};
       if (!token || !userId) throw new Error("Failed to fetch Stream token from backend");
 
-      // 2. Init Video Client
+      // 2. Derive robust display name using Clerk if backend name is missing
+      const displayName =
+        (userName && userName !== "Unknown" ? userName : null) ||
+        (clerkUser?.firstName ? `${clerkUser.firstName} ${clerkUser.lastName || ""}`.trim() : null) ||
+        clerkUser?.username ||
+        clerkUser?.primaryEmailAddress?.emailAddress ||
+        userId;
+      const displayImage = userImage || clerkUser?.imageUrl || "";
+
+      // 3. Init Video Client
       const client = await initializeStreamClient(
-        { id: userId, name: userName, image: userImage },
+        { id: userId, name: displayName, image: displayImage },
         token
       );
       setStreamClient(client);
 
-      // 3. Join Call
+      // 4. Join Call
       videoCall = client.call("default", session.callId);
       await videoCall.join({ create: true });
       videoCallRef.current = videoCall;
       setCall(videoCall);
 
-      // 4. Init Chat Client
+      // 5. Init Chat Client
       const apiKey = import.meta.env.VITE_STREAM_API_KEY;
       if (!apiKey) throw new Error("Stream API Key is missing in .env");
       
       chatClientInstance = StreamChat.getInstance(apiKey);
       await chatClientInstance.connectUser(
-        { id: userId, name: userName, image: userImage },
+        { id: userId, name: displayName, image: displayImage },
         token
       );
       chatClientRef.current = chatClientInstance;
