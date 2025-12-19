@@ -41,20 +41,30 @@ const HomePage = () => {
           {/* Logo Section */}
           <div className="flex-1">
             <Link to="/" className="flex items-center gap-3 group">
-              {/* IMAGE LOGO */}
-              <div className="p-[2px] rounded-xl group-hover:shadow-[0_0_0_2px_rgba(59,130,246,0.9),0_0_14px_rgba(59,130,246,0.8),0_0_8px_rgba(236,72,153,0.45)] shadow-[0_0_0_1.5px_rgba(59,130,246,0.7),0_0_10px_rgba(59,130,246,0.6),0_0_6px_rgba(236,72,153,0.35)]">
+              
+              {/* IMAGE LOGO - Matches Navbar Style */}
+              <div className="
+                  p-2 rounded-xl bg-slate-900 
+                  transition-all duration-500 relative
+                  border border-white/10
+                  
+                  /* 1. Default State: Visible Soft White Glow */
+                  shadow-[0_0_15px_rgba(255,255,255,0.1)]
+
+                  /* 2. Hover State: Intense Pinkish-Blue Glow */
+                  group-hover:border-white/30
+                  group-hover:shadow-[0_0_25px_rgba(236,72,153,0.5),0_0_15px_rgba(59,130,246,0.3)]
+              ">
                 <img
                   src="/logo.png"
                   alt="Code Sync Logo"
-                  className="h-10 w-10 object-contain rounded-lg transition-transform group-hover:rotate-12"
-                  style={{
-                    filter: "invert(25%) sepia(70%) saturate(2000%) hue-rotate(230deg) brightness(102%) contrast(110%)",
-                  }}
+                  className="h-10 w-10 object-contain relative z-10 transition-transform group-hover:rotate-12"
+                  style={{ filter: "brightness(0) invert(1)" }} // Forces white logo
                 />
               </div>
 
-              {/* BRAND TEXT */}
-              <span className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 transition-opacity hover:opacity-80">
+              {/* BRAND TEXT - White */}
+              <span className="text-3xl font-extrabold tracking-tight text-white transition-opacity group-hover:opacity-90">
                 Code Sync
               </span>
             </Link>
