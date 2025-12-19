@@ -13,7 +13,9 @@ import {
   Cpu,
   Loader2,
   AlertTriangle,
-  Terminal // Imported for tab icon
+  Terminal,
+  Code2,
+  Layers
 } from 'lucide-react';
 
 // Import your data and helper functions
@@ -42,11 +44,12 @@ const Problem = () => {
 
   if (!problem) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4">Problem Not Found</h1>
-          <Link to="/problems" className="text-blue-400 hover:text-blue-300">
-            &larr; Back to Problems
+      <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center relative overflow-hidden">
+         <div className="absolute inset-0 bg-[radial-gradient(#ffffff05_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+        <div className="text-center relative z-10">
+          <h1 className="text-4xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-pink-500">Problem Not Found</h1>
+          <Link to="/problems" className="text-slate-400 hover:text-white transition-colors flex items-center justify-center gap-2">
+            <ChevronLeft size={20} /> Back to Problems
           </Link>
         </div>
       </div>
@@ -72,7 +75,7 @@ const Problem = () => {
         // Handle cases where expected output might be missing for a language
         if (!expectedOutputRaw) {
              setOutput({ type: 'success', text: result.output });
-             toast('Code Executed (No validation available for this language)', { icon: '⚠️' });
+             toast('Code Executed (No validation available)', { icon: '⚠️' });
              return;
         }
 
@@ -122,7 +125,7 @@ const Problem = () => {
       particleCount: 100,
       spread: 70,
       origin: { y: 0.6 },
-      colors: ['#3B82F6', '#8B5CF6', '#EC4899'] // Blue, Purple, Pink
+      colors: ['#3B82F6', '#EC4899', '#10B981'] // Blue, Pink, Emerald
     });
   };
 
@@ -131,7 +134,7 @@ const Problem = () => {
     setOutput(null);
     setTestResults(null);
     setActiveTab('testcases'); // Reset to test cases tab
-    toast("Code Reset", { icon: '🔄' });
+    toast("Code Reset", { icon: '🔄', style: { borderRadius: '10px', background: '#333', color: '#fff' } });
   };
 
   const getDifficultyColor = (diff) => {
@@ -144,27 +147,28 @@ const Problem = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-pink-500/30 flex flex-col overflow-hidden">
+    // MAIN CONTAINER: Deep Black Background with Cyberpunk Ambient
+    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-pink-500/30 flex flex-col overflow-hidden relative">
       
-      {/* NO NAVBAR HERE, as requested */}
+      {/* Ambient Glows */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none animate-pulse-slow" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-pink-600/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(#ffffff05_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none z-0" />
 
       {/* Main Content Area (Full height) */}
-      <div className="flex-1 h-screen flex flex-col relative z-0">
+      <div className="flex-1 h-screen flex flex-col relative z-10">
         
-        {/* Ambient Glows (Background) */}
-        <div className="absolute top-[-10%] left-[-10%] w-[40rem] h-[40rem] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40rem] h-[40rem] bg-pink-600/10 rounded-full blur-[120px] pointer-events-none" />
-
         {/* --- Header Bar --- */}
-        <div className="flex items-center justify-between px-6 py-3 border-b border-white/10 bg-slate-900/50 backdrop-blur-md z-10">
+        <div className="flex items-center justify-between px-6 py-3 border-b border-white/5 bg-[#0A0A0A]/80 backdrop-blur-xl z-20">
           <div className="flex items-center gap-4">
-            <Link to="/problems" className="p-2 hover:bg-white/5 rounded-lg transition-colors text-slate-400 hover:text-white">
-              <ChevronLeft size={20} />
+            <Link to="/problems" className="p-2 hover:bg-white/5 rounded-xl transition-colors text-slate-400 hover:text-white group border border-transparent hover:border-white/5">
+              <ChevronLeft size={20} className="group-hover:-translate-x-0.5 transition-transform" />
             </Link>
             <div>
-              <h1 className="text-lg font-bold flex items-center gap-3">
+              <h1 className="text-lg font-bold flex items-center gap-3 text-white">
+                <span className="p-1 bg-white/5 rounded-lg text-blue-400"><Code2 size={18} /></span>
                 {problem.title}
-                <span className={`text-xs px-2 py-0.5 rounded border ${getDifficultyColor(problem.difficulty)} font-mono uppercase tracking-wider`}>
+                <span className={`text-[10px] px-2 py-0.5 rounded border ${getDifficultyColor(problem.difficulty)} font-mono uppercase tracking-wider`}>
                   {problem.difficulty}
                 </span>
               </h1>
@@ -177,7 +181,10 @@ const Problem = () => {
                 <select 
                     value={language}
                     onChange={(e) => setLanguage(e.target.value)}
-                    className="appearance-none bg-slate-800 border border-white/10 text-slate-300 text-sm rounded-lg px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500/50 hover:bg-slate-700 transition-colors cursor-pointer font-medium"
+                    className="
+                        appearance-none bg-[#050505] border border-white/10 text-slate-300 text-sm rounded-xl px-4 py-2 pr-10 
+                        focus:outline-none focus:ring-1 focus:ring-blue-500/50 hover:bg-white/5 hover:border-white/20 transition-all cursor-pointer font-medium
+                    "
                 >
                     <option value="javascript">JavaScript</option>
                     <option value="python">Python</option>
@@ -185,20 +192,20 @@ const Problem = () => {
                     <option value="c">C</option>
                     <option value="cpp">C++</option>
                 </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 group-hover:text-slate-300 transition-colors">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
             </div>
 
-            {/* Run Button */}
+            {/* Run Button (Constant Blue) */}
             <button 
               onClick={handleRunCode}
               disabled={isRunning}
               className={`
-                flex items-center gap-2 px-6 py-2 rounded-lg font-bold text-sm tracking-wide transition-all duration-300
+                flex items-center gap-2 px-6 py-2 rounded-xl font-bold text-sm tracking-wide transition-all duration-300
                 ${isRunning 
-                  ? 'bg-slate-700 text-slate-400 cursor-not-allowed' 
-                  : 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)] hover:shadow-[0_0_20px_rgba(16,185,129,0.6)] transform hover:scale-105 active:scale-95'
+                  ? 'bg-white/5 text-slate-500 cursor-not-allowed border border-white/5' 
+                  : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40 hover:scale-[1.02] border border-blue-500/50'
                 }
               `}
             >
@@ -213,20 +220,21 @@ const Problem = () => {
             <PanelGroup direction="horizontal" className="h-full">
                 
                 {/* --- Left Panel: Description --- */}
-                <Panel defaultSize={40} minSize={25} className="bg-slate-950/80 backdrop-blur-sm flex flex-col border-r border-white/10">
+                <Panel defaultSize={40} minSize={25} className="bg-[#0A0A0A]/40 backdrop-blur-sm flex flex-col border-r border-white/5">
                     <div className="h-full overflow-y-auto custom-scrollbar p-6">
                         
                         {/* Description Text */}
                         <div className="prose prose-invert max-w-none">
-                            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                                <span className="p-1.5 rounded-md bg-blue-500/10 text-blue-400"><Cpu size={20} /></span>
-                                Description
+                            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2 pb-4 border-b border-white/5">
+                                <span className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400"><Cpu size={20} /></span>
+                                Problem Description
                             </h2>
-                            <p className="text-slate-300 leading-relaxed mb-6">{problem.description.text}</p>
+                            <p className="text-slate-300 leading-relaxed mb-6 text-sm md:text-base">{problem.description.text}</p>
                             
                             {/* Notes */}
                             {problem.description.notes && problem.description.notes.length > 0 && (
-                                <div className="bg-blue-500/5 border-l-4 border-blue-500/30 p-4 rounded-r-lg mb-6">
+                                <div className="bg-blue-500/5 border border-blue-500/10 p-4 rounded-xl mb-6">
+                                    <h4 className="text-xs font-bold text-blue-400 uppercase mb-2 flex items-center gap-2"><AlertTriangle size={12}/> Notes</h4>
                                     <ul className="list-disc list-inside space-y-1 text-slate-400 text-sm">
                                         {problem.description.notes.map((note, i) => (
                                             <li key={i}>{note}</li>
@@ -236,24 +244,26 @@ const Problem = () => {
                             )}
 
                             {/* Examples */}
-                            <h3 className="text-lg font-bold text-white mb-3 mt-8">Examples</h3>
+                            <h3 className="text-lg font-bold text-white mb-4 mt-8 flex items-center gap-2">
+                                <span className="p-1 rounded-md bg-purple-500/10 text-purple-400"><Layers size={16} /></span> Examples
+                            </h3>
                             <div className="space-y-4">
                                 {problem.examples.map((ex, index) => (
-                                    <div key={index} className="bg-slate-900 rounded-xl border border-white/5 p-4 shadow-sm hover:border-white/10 transition-colors">
-                                        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Example {index + 1}</div>
-                                        <div className="space-y-2 font-mono text-sm">
-                                            <div className="flex gap-3">
-                                                <span className="text-slate-500 select-none w-12">Input:</span>
-                                                <span className="text-slate-200">{ex.input}</span>
+                                    <div key={index} className="bg-[#050505] rounded-xl border border-white/5 p-4 transition-colors hover:border-white/10">
+                                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Example {index + 1}</div>
+                                        <div className="space-y-3 font-mono text-sm">
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-slate-500 text-xs uppercase">Input</span>
+                                                <span className="text-slate-200 bg-white/5 p-2 rounded-lg border border-white/5">{ex.input}</span>
                                             </div>
-                                            <div className="flex gap-3">
-                                                <span className="text-slate-500 select-none w-12">Output:</span>
-                                                <span className="text-emerald-400">{ex.output}</span>
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-slate-500 text-xs uppercase">Output</span>
+                                                <span className="text-emerald-400 bg-emerald-500/5 p-2 rounded-lg border border-emerald-500/10">{ex.output}</span>
                                             </div>
                                             {ex.explanation && (
-                                                <div className="flex gap-3 pt-1">
-                                                    <span className="text-slate-500 select-none w-12">Note:</span>
-                                                    <span className="text-slate-400 italic">{ex.explanation}</span>
+                                                <div className="flex flex-col gap-1 pt-1">
+                                                    <span className="text-slate-500 text-xs uppercase">Explanation</span>
+                                                    <span className="text-slate-400 italic pl-1">{ex.explanation}</span>
                                                 </div>
                                             )}
                                         </div>
@@ -265,8 +275,8 @@ const Problem = () => {
                             <h3 className="text-lg font-bold text-white mb-3 mt-8">Constraints</h3>
                             <ul className="grid grid-cols-1 gap-2 text-sm text-slate-400 font-mono">
                                 {problem.constraints.map((constraint, i) => (
-                                    <li key={i} className="flex items-center gap-2">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-pink-500/50"></span>
+                                    <li key={i} className="flex items-center gap-3 bg-white/5 p-2 rounded-lg border border-white/5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-pink-500 shadow-[0_0_5px_rgba(236,72,153,0.5)]"></span>
                                         {constraint}
                                     </li>
                                 ))}
@@ -275,8 +285,8 @@ const Problem = () => {
                     </div>
                 </Panel>
 
-                <PanelResizeHandle className="w-1.5 bg-slate-900 hover:bg-blue-500/50 transition-colors cursor-col-resize flex items-center justify-center group z-20">
-                    <div className="w-0.5 h-8 bg-slate-700 group-hover:bg-white rounded-full" />
+                <PanelResizeHandle className="w-1 bg-[#050505] hover:bg-blue-500/50 transition-colors cursor-col-resize flex items-center justify-center group z-20 border-l border-r border-white/5">
+                    <div className="w-0.5 h-8 bg-slate-700 group-hover:bg-white rounded-full transition-colors" />
                 </PanelResizeHandle>
 
                 {/* --- Right Panel: Editor & Output --- */}
@@ -286,22 +296,22 @@ const Problem = () => {
                         {/* Editor Section */}
                         <Panel defaultSize={60} minSize={20} className="bg-[#1e1e1e] relative flex flex-col">
                             {/* Editor Toolbar */}
-                            <div className="h-10 bg-slate-900 border-b border-white/5 flex items-center justify-between px-4">
+                            <div className="h-10 bg-[#1e1e1e] border-b border-white/5 flex items-center justify-between px-4 select-none">
                                 <div className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                                    <Code2 size={14} className="text-blue-500" />
                                     Code Editor
                                 </div>
                                 <button 
                                     onClick={resetCode}
-                                    className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded transition-colors"
+                                    className="p-1.5 text-slate-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-medium"
                                     title="Reset Code"
                                 >
-                                    <RotateCcw size={14} />
+                                    <RotateCcw size={12} /> Reset
                                 </button>
                             </div>
                             
                             {/* Monaco Editor */}
-                            <div className="flex-1 overflow-hidden pt-2">
+                            <div className="flex-1 overflow-hidden pt-2 bg-[#1e1e1e]">
                                 <Editor
                                     height="100%"
                                     theme="vs-dark"
@@ -315,25 +325,27 @@ const Problem = () => {
                                         automaticLayout: true,
                                         padding: { top: 10 },
                                         fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
+                                        renderLineHighlight: "none", // Cleaner look
                                     }}
                                 />
                             </div>
                         </Panel>
 
-                        <PanelResizeHandle className="h-1.5 bg-slate-900 hover:bg-blue-500/50 transition-colors cursor-row-resize flex items-center justify-center group z-20">
-                            <div className="w-8 h-0.5 bg-slate-700 group-hover:bg-white rounded-full" />
+                        <PanelResizeHandle className="h-1 bg-[#050505] hover:bg-blue-500/50 transition-colors cursor-row-resize flex items-center justify-center group z-20 border-t border-b border-white/5">
+                            <div className="w-8 h-0.5 bg-slate-700 group-hover:bg-white rounded-full transition-colors" />
                         </PanelResizeHandle>
 
                         {/* Output Section */}
-                        <Panel defaultSize={40} minSize={10} className="bg-slate-950 flex flex-col">
-                            <div className="h-10 bg-slate-900 border-b border-white/5 flex items-center justify-between px-2">
-                                <div className="flex items-center h-full">
+                        <Panel defaultSize={40} minSize={10} className="bg-[#0A0A0A] flex flex-col">
+                            {/* Output Toolbar / Tabs */}
+                            <div className="h-10 bg-[#0A0A0A] border-b border-white/5 flex items-center justify-between px-2">
+                                <div className="flex items-center h-full gap-1">
                                     <button
                                         onClick={() => setActiveTab('testcases')}
                                         className={`
-                                            flex items-center gap-2 px-4 h-full text-xs font-bold uppercase tracking-wider border-b-2 transition-colors
+                                            flex items-center gap-2 px-4 h-full text-xs font-bold uppercase tracking-wider border-b-2 transition-all
                                             ${activeTab === 'testcases' 
-                                                ? 'border-blue-500 text-blue-400 bg-white/5' 
+                                                ? 'border-blue-500 text-blue-400 bg-blue-500/5' 
                                                 : 'border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/5'
                                             }
                                         `}
@@ -343,9 +355,9 @@ const Problem = () => {
                                     <button
                                         onClick={() => setActiveTab('output')}
                                         className={`
-                                            flex items-center gap-2 px-4 h-full text-xs font-bold uppercase tracking-wider border-b-2 transition-colors
+                                            flex items-center gap-2 px-4 h-full text-xs font-bold uppercase tracking-wider border-b-2 transition-all
                                             ${activeTab === 'output' 
-                                                ? 'border-emerald-500 text-emerald-400 bg-white/5' 
+                                                ? 'border-pink-500 text-pink-400 bg-pink-500/5' 
                                                 : 'border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/5'
                                             }
                                         `}
@@ -354,27 +366,30 @@ const Problem = () => {
                                     </button>
                                 </div>
                                 {isSuccess && activeTab === 'output' && (
-                                    <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 mr-2">
-                                        <CheckCircle size={12} /> Passed
+                                    <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 mr-2 animate-pulse">
+                                        <CheckCircle size={12} /> ALL PASSED
                                     </span>
                                 )}
                             </div>
                             
-                            <div className="flex-1 p-4 font-mono text-sm overflow-y-auto custom-scrollbar">
+                            <div className="flex-1 p-4 font-mono text-sm overflow-y-auto custom-scrollbar bg-[#0A0A0A]">
                                 {/* TAB 1: TEST CASES (Always Visible) */}
                                 {activeTab === 'testcases' && (
                                     <div className="space-y-4">
                                         {problem.examples.map((ex, index) => (
                                             <div key={index} className="space-y-2">
-                                                <div className="text-xs font-bold text-slate-500 uppercase">Case {index + 1}</div>
-                                                <div className="bg-slate-900 rounded-lg p-3 border border-white/5 space-y-2">
+                                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
+                                                    Case {index + 1}
+                                                </div>
+                                                <div className="bg-white/5 rounded-lg p-3 border border-white/5 space-y-2 hover:border-white/10 transition-colors">
                                                     <div className="flex gap-2 text-slate-300">
-                                                        <span className="w-16 text-slate-500 select-none">Input:</span>
-                                                        <span className="font-mono break-all">{ex.input}</span>
+                                                        <span className="w-16 text-slate-500 select-none text-xs uppercase pt-0.5">Input:</span>
+                                                        <span className="font-mono break-all text-slate-200">{ex.input}</span>
                                                     </div>
                                                     <div className="flex gap-2 text-slate-300">
-                                                        <span className="w-16 text-slate-500 select-none">Output:</span>
-                                                        <span className="font-mono break-all">{ex.output}</span>
+                                                        <span className="w-16 text-slate-500 select-none text-xs uppercase pt-0.5">Output:</span>
+                                                        <span className="font-mono break-all text-emerald-400">{ex.output}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -387,28 +402,28 @@ const Problem = () => {
                                     <>
                                         {/* Case 1: Initial State */}
                                         {!output && !testResults && !isRunning && (
-                                            <div className="h-full flex flex-col items-center justify-center text-slate-600 opacity-50">
-                                                <Play size={32} className="mb-2" />
-                                                <p>Run your code to see output</p>
+                                            <div className="h-full flex flex-col items-center justify-center text-slate-600 opacity-50 gap-3">
+                                                <Terminal size={32} strokeWidth={1.5} />
+                                                <p className="text-xs uppercase tracking-widest font-semibold">Ready to Execute</p>
                                             </div>
                                         )}
                                         
                                         {/* Case 2: Running */}
                                         {isRunning && (
-                                            <div className="h-full flex items-center justify-center text-blue-400 gap-2">
-                                                <Loader2 className="animate-spin" />
-                                                <span>Executing...</span>
+                                            <div className="h-full flex flex-col items-center justify-center text-blue-400 gap-3">
+                                                <Loader2 className="animate-spin" size={32} />
+                                                <span className="text-xs uppercase tracking-widest font-bold animate-pulse">Compiling & Running...</span>
                                             </div>
                                         )}
 
                                         {/* Case 3: Compilation/Runtime Error */}
                                         {output && output.type === 'error' && (
-                                            <div className="w-full rounded-lg p-4 bg-red-500/10 border border-red-500/20 text-red-200">
-                                                <div className="flex items-center gap-2 text-red-400 font-bold mb-2">
+                                            <div className="w-full rounded-xl p-4 bg-red-500/5 border border-red-500/20 text-red-200">
+                                                <div className="flex items-center gap-2 text-red-400 font-bold mb-3 border-b border-red-500/10 pb-2">
                                                     <AlertTriangle size={16} />
                                                     <span>Execution Error</span>
                                                 </div>
-                                                <pre className="whitespace-pre-wrap font-mono text-xs md:text-sm overflow-x-auto">
+                                                <pre className="whitespace-pre-wrap font-mono text-xs text-red-300/90 overflow-x-auto leading-relaxed">
                                                     {output.text}
                                                 </pre>
                                             </div>
@@ -417,33 +432,46 @@ const Problem = () => {
                                         {/* Case 4: Test Results (Successful execution) */}
                                         {testResults && (
                                             <div className="space-y-3">
-                                                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Test Case Results</div>
+                                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                                    <span>Results Summary</span>
+                                                    <span className="text-slate-600">{testResults.filter(r => r.passed).length} / {testResults.length} Passed</span>
+                                                </div>
+                                                
                                                 {testResults.map((res, index) => (
                                                     <div 
                                                         key={index} 
-                                                        className={`p-3 rounded-lg border ${res.passed ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-red-500/5 border-red-500/20'}`}
+                                                        className={`
+                                                            p-3 rounded-xl border transition-all duration-300
+                                                            ${res.passed 
+                                                                ? 'bg-emerald-500/5 border-emerald-500/20 hover:bg-emerald-500/10' 
+                                                                : 'bg-red-500/5 border-red-500/20 hover:bg-red-500/10'
+                                                            }
+                                                        `}
                                                     >
-                                                        <div className="flex items-center justify-between mb-1">
-                                                            <span className={`font-bold ${res.passed ? 'text-emerald-400' : 'text-red-400'}`}>
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <span className={`font-bold text-sm ${res.passed ? 'text-emerald-400' : 'text-red-400'}`}>
                                                                 Test Case {res.testCase}
                                                             </span>
-                                                            {res.passed ? <CheckCircle size={16} className="text-emerald-500" /> : <XCircle size={16} className="text-red-500" />}
+                                                            {res.passed 
+                                                                ? <CheckCircle size={16} className="text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]" /> 
+                                                                : <XCircle size={16} className="text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                                                            }
                                                         </div>
                                                         
                                                         {!res.passed && (
-                                                            <div className="mt-2 text-xs space-y-1 bg-slate-900/50 p-2 rounded">
+                                                            <div className="mt-2 text-xs space-y-1 bg-[#050505] p-2 rounded-lg border border-white/5">
                                                                 <div className="flex gap-2">
-                                                                    <span className="text-slate-500 w-16">Expected:</span>
-                                                                    <span className="text-emerald-400 font-mono">{res.expected}</span>
+                                                                    <span className="text-slate-500 w-16 uppercase text-[10px] pt-0.5">Expected:</span>
+                                                                    <span className="text-emerald-400 font-mono bg-emerald-500/5 px-1 rounded">{res.expected}</span>
                                                                 </div>
                                                                 <div className="flex gap-2">
-                                                                    <span className="text-slate-500 w-16">Actual:</span>
-                                                                    <span className="text-red-400 font-mono">{res.actual}</span>
+                                                                    <span className="text-slate-500 w-16 uppercase text-[10px] pt-0.5">Actual:</span>
+                                                                    <span className="text-red-400 font-mono bg-red-500/5 px-1 rounded">{res.actual}</span>
                                                                 </div>
                                                             </div>
                                                         )}
                                                         {res.passed && (
-                                                            <div className="text-xs text-slate-500">Output matched expected result.</div>
+                                                            <div className="text-[10px] text-slate-500 font-medium">Output matched expected result.</div>
                                                         )}
                                                     </div>
                                                 ))}

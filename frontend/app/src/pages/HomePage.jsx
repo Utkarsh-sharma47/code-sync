@@ -53,8 +53,8 @@ const HomePage = () => {
                 />
               </div>
 
-              {/* BRAND TEXT */}
-              <span className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 transition-opacity hover:opacity-80">
+              {/* BRAND TEXT - CHANGED TO WHITE */}
+              <span className="text-3xl font-extrabold tracking-tight text-white transition-opacity hover:opacity-80">
                 Code Sync
               </span>
             </Link>
@@ -226,8 +226,8 @@ const HomePage = () => {
           {/* --- Right Column: Hero Image --- */}
           <motion.div className="lg:w-1/2 lg:-mt-20" variants={itemVariants}>
             <div className="relative group perspective-1000">
-              {/* Decorative blur */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl blur-2xl opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
+              {/* Decorative blur - CHANGED EFFECT (Pulsing Blue/Pink Gradient) */}
+              <div className="absolute -inset-1 bg-gradient-to-tr from-blue-500 via-pink-500 to-purple-500 rounded-2xl blur-2xl opacity-40 group-hover:opacity-70 transition-all duration-500 animate-pulse-slow"></div>
 
               <img
                 src="/codeSyncHome4.jpg"

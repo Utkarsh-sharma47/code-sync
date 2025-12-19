@@ -1,6 +1,7 @@
 {
   "dependencies": {
-    "code-sync": "file:.."
+    "code-sync": "file:..",
+    "framer-motion": "^12.23.26"
   },
   "devDependencies": {
     "vite": "^7.2.7"
