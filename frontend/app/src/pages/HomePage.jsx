@@ -211,26 +211,8 @@ const HomePage = () => {
               </SignedOut>
             </motion.div>
 
-            {/* Stats */}
-            <motion.div
-              className="grid grid-cols-3 gap-6 mt-12 border-t border-white/10 pt-8"
-              variants={itemVariants}
-            >
-              {[
-                { label: "Active Users", value: "10K+" },
-                { label: "Sessions", value: "50K+" },
-                { label: "Uptime", value: "99.9%" },
-              ].map((stat, index) => (
-                <div key={index} className="text-center sm:text-left">
-                  <h3 className="text-3xl font-bold text-white mb-1">
-                    {stat.value}
-                  </h3>
-                  <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">
-                    {stat.label}
-                  </p>
-                </div>
-              ))}
-            </motion.div>
+            {/* Stats Section Removed Here */}
+
           </motion.div>
 
           {/* --- Right Column: Hero Image --- */}
