@@ -50,6 +50,12 @@ app.use("/api/inngest", serve({ client: inngest, functions }));
 app.use("/api/chat" ,chatRoutes);
 app.use("/api/sessions" ,sessionRoutes);
 
+// hit endpoint
+app.get("/ping", (_req, res) => {
+  // Optionally: console.log("ping received");
+  res.status(200).send("OK");
+});
+
 // Socket.io events for collaborative code editing
 io.on("connection", (socket) => {
   console.log("Socket connected:", socket.id);
